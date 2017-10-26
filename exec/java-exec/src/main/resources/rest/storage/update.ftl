@@ -18,12 +18,19 @@
   <a href="/queries">back</a><br/>
   <div class="page-header">
   </div>
+
   <h3>Configuration</h3>
   <form id="updateForm" role="form" action="/storage/${model.getName()}" method="POST">
     <input type="hidden" name="name" value="${model.getName()}" />
     <div class="form-group">
       <textarea class="form-control" id="config" rows="20" cols="50" name="config" style="font-family: Courier;">
       </textarea>
+      <script src="/static/js/ace.js" type="text/javascript" charset="utf-8"></script>
+      <script>
+          var editor = ace.edit("editor");
+          editor.setTheme("ace/theme/monokai");
+          editor.getSession().setMode("ace/mode/javascript");
+      </script>
     </div>
     <a class="btn btn-default" href="/storage">Back</a>
     <button class="btn btn-default" type="submit" onclick="doUpdate();">
