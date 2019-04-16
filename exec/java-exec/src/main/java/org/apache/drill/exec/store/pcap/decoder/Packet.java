@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Formatter;
+import java.util.HashMap;
 
 import static org.apache.drill.exec.store.pcap.PcapFormatUtils.convertInt;
 import static org.apache.drill.exec.store.pcap.PcapFormatUtils.convertShort;
@@ -57,6 +58,7 @@ public class Packet {
   protected int protocol;
   protected boolean isRoutingV6;
   protected boolean isCorrupt = false;
+  protected HashMap parsedPacket;
 
   private static final Logger logger = LoggerFactory.getLogger(Packet.class);
 
@@ -78,6 +80,7 @@ public class Packet {
     etherOffset = 0;
 
     decodeEtherPacket();
+    parsePacket();
     return true;
   }
 
@@ -87,6 +90,7 @@ public class Packet {
     etherOffset = offset + PacketConstants.PCAP_HEADER_SIZE;
     decodePcapHeader(raw, byteOrder, maxLength, offset);
     decodeEtherPacket();
+    parsePacket();
     return offset + PacketConstants.PCAP_HEADER_SIZE + originalLength;
   }
 
@@ -487,4 +491,35 @@ public class Packet {
     int dstPortOffset = ipOffset + getIPHeaderLength() + offset;
     return convertShort(raw, dstPortOffset);
   }
+
+  private void parsePacket() {
+    HashMap parsedData = new HashMap();
+    byte[] packetData = getData();
+    // TODO Make this configurable
+    if ( getSrc_port() == 53 || getDst_port() == 53 ) {
+      try {
+        DnsPacket data = new DnsPacket(new io.kaitai.struct.ByteBufferKaitaiStream(packetData));
+        parsedData.put("transaction_id", data.transactionId());
+        parsedData.put("query_count", data.qdcount());
+        parsedData.put("answer_count", data.ancount());
+        parsedData.put("authority_record_count", data.nscount());
+        parsedData.put("additional_record_count", data.arcount());
+        parsedData.put("query_response", data.flags().qr());
+        parsedData.put("OpCode", data.flags().opcode());
+        parsedData.put("authoritive_answer", data.flags().aa());
+        parsedData.put("truncated_answer", data.flags().tc());
+        parsedData.put("recursion_desired", data.flags().rd());
+        parsedData.put("recursion_available", data.flags().ra());
+        parsedData.put("zero", data.flags().z());
+        parsedData.put("authentic_data", data.flags().ad());
+        parsedData.put("checking_disabled", data.flags().cd());
+        parsedData.put("RCODE", data.flags().rcode());
+
+      } catch( Exception e) {
+        logger.info("Unable to parse DNS packet.");
+      }
+    }
+    this.parsedPacket = parsedData;
+  }
+
 }

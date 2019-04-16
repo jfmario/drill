@@ -64,6 +64,11 @@
       <version>0.1.0</version>
     </dependency>
 
+    <dependency>
+      <groupId>io.kaitai</groupId>
+      <artifactId>kaitai-struct-runtime</artifactId>
+      <version>0.8</version>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.apache.drill.exec</groupId>

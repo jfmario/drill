@@ -56,6 +56,11 @@ public class TestPcapRecordReader extends BaseTestQuery {
   }
 
   @Test
+  public void testDNSQuery() throws Exception {
+    runSQLVerifyCount("select * from dfs.`store/pcap/dns.pcap`", 38);
+  }
+
+  @Test
   public void testDistinctQuery() throws Exception {
     // omit data field from distinct count for now
     runSQLVerifyCount("select distinct type, network, `timestamp`, src_ip, dst_ip, src_port, dst_port, src_mac_address, dst_mac_address, tcp_session, packet_length from dfs.`store/pcap/tcp-1.pcap`", 1);
