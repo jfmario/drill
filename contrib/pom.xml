@@ -56,6 +56,7 @@
     <module>storage-jdbc</module>
     <module>storage-kafka</module>
     <module>storage-kudu</module>
+    <module>storage-solr</module>
     <module>storage-opentsdb</module>
     <module>storage-http</module>
     <module>storage-druid</module>
@@ -69,5 +70,4 @@
       </properties>
     </profile>
   </profiles>
-		<module>storage-solr</module>
 </project>
