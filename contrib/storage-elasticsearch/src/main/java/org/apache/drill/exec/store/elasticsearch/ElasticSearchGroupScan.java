@@ -169,8 +169,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 			Settings esCfg = new PropertiesSettings();
 			List<PartitionDefinition> partitions = RestService.findPartitions(esCfg, comlogger);
 			for (PartitionDefinition part : partitions) {
-
-				// 这个region所处于的地址
+				// The address where this region is located
 				regionsToScan.put(part, new ServerHost(part.nodeIp));
 				scanSizeInBytes += statsCalculator.getRegionSizeInBytes(part);
 
@@ -192,7 +191,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 		watch.start();
 		Map<String, DrillbitEndpoint> endpointMap = new HashMap<String, DrillbitEndpoint>();
 		for (DrillbitEndpoint ep : plugin.getContext().getBits()) {
-			// 该集群有些些机器
+			// The cluster has some machines
 			endpointMap.put(ep.getAddress(), ep);
 		}
 
@@ -209,7 +208,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 			}
 		}
 		logger.debug("Took {} µs to get operator affinity", watch.elapsed(TimeUnit.NANOSECONDS) / 1000);
-		// 这些进程使用有效的次数
+		// These processes use valid times
 		return Lists.newArrayList(affinityMap.values());
 	}
 
@@ -246,7 +245,8 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 		/*
 		 * Initialize these two maps
 		 */
-		// 那台机器负责那些slot，也就是那个进程要运行多少个任务，其实可以优化，同一机器优先执行本机器的请求
+		// That machine is responsible for those slots, that is, how many tasks to run in that process,
+		// in fact, can be optimized, the same machine gives priority to the request of this machine.
 		for (int i = 0; i < numSlots; ++i) {
 			endpointFragmentMapping.put(i, new ArrayList<ElasticSearchScanSpec>(maxPerEndpointSlot));
 			String hostname = incomingEndpoints.get(i).getAddress();
@@ -272,12 +272,12 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 			 * Test if there is a drillbit endpoint which is also an HBase
 			 * RegionServer that hosts the current HBase region
 			 */
-			// 同机器执行在这里进行了优化了
+			// The same machine execution was optimized here.
 			Queue<Integer> endpointIndexlist = endpointHostIndexListMap.get(regionEntry.getValue().getIp());
 			if (endpointIndexlist != null) {
 				Integer slotIndex = endpointIndexlist.poll();
 				List<ElasticSearchScanSpec> endpointSlotScanList = endpointFragmentMapping.get(slotIndex);
-				// 对这个的业务进程的查询,这里同时生成查询条件的了
+				// For the query of this business process, the query condition is generated here at the same time.
 				endpointSlotScanList.add(regionInfoToSubScanSpec(regionEntry.getKey()));
 				// add to the tail of the slot list, to add more later in round
 				// robin fashion
@@ -308,11 +308,11 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 		 * Now, let's process any regions which remain unassigned and assign
 		 * them to slots with minimum number of assignments.
 		 */
-		// 还有些查询没有分配的
+		// Some queries are not assigned
 		if (regionsToAssignSet.size() > 0) {
 			for (Entry<PartitionDefinition, ServerHost> regionEntry : regionsToAssignSet) {
 				List<ElasticSearchScanSpec> smallestList = minHeap.poll();
-				// 加到这个节点中
+				// Add to this node
 				smallestList.add(regionInfoToSubScanSpec(regionEntry.getKey()));
 				if (smallestList.size() < maxPerEndpointSlot) {
 					minHeap.offer(smallestList);
@@ -346,7 +346,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 	}
 
 	private ElasticSearchScanSpec regionInfoToSubScanSpec(PartitionDefinition part) {
-		// 这里就生成查询对象了
+		// Here is the query object generated
 		// HBaseScanSpec spec = hbaseScanSpec;
 		// return new HBaseSubScanSpec()
 		// .setTableName(spec.getTableName())
@@ -375,7 +375,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 		assert minorFragmentId < endpointFragmentMapping.size() : String.format(
 				"Mappings length [%d] should be greater than minor fragment id [%d] but it isn't.",
 				endpointFragmentMapping.size(), minorFragmentId);
-		// 之前已经这样分配结果的了
+		// I have already distributed the results before
 		// return new HBaseSubScan(getUserName(), storagePlugin,
 		// storagePluginConfig,
 		// endpointFragmentMapping.get(minorFragmentId), columns);
@@ -408,7 +408,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 
 	@Override
 	public ScanStats getScanStats() {
-		// 拉取统计数据
+		// Get statistics
 		Response response;
 		JsonNode jsonNode;
 		RestClient client = this.plugin.getClient();
@@ -416,7 +416,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 			response = client.performRequest("GET",
 					"/" + this.scanSpec.getIndexName() + "/" + this.scanSpec.getTypeMappingName() + "/_count");
 			jsonNode = JsonHelper.readRespondeContentAsJsonTree(this.plugin.getObjectMapper(), response);
-			// 拿到统计量
+			// Get statistics
 			JsonNode countNode = JsonHelper.getPath(jsonNode, "count");
 			long numDocs = 0;
 			if (!countNode.isMissingNode()) {
@@ -435,14 +435,14 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 				if (!hits.isMissingNode()) {
 					// TODO: Is there another elegant way to get the JsonNode
 					// Content?
-					// 拿一条数据出来
+					// Take a piece of data out
 					docSize = hits.elements().next().toString().getBytes().length;
 				} else {
 					throw new DrillRuntimeException("Couldn't size any documents for " + this.scanSpec.getIndexName()
 							+ "." + this.scanSpec.getTypeMappingName());
 				}
 			}
-			// 这样就知道有多少数据量了
+			// This will know how much data is available.
 			return new ScanStats(ScanStats.GroupScanProperty.EXACT_ROW_COUNT, numDocs, 1, docSize * numDocs);
 		} catch (IOException e) {
 			throw new DrillRuntimeException(e.getMessage(), e);

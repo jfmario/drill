@@ -52,32 +52,10 @@ public class TableStatsCalculator {
    * @param config
    * @throws IOException
    */
-  public TableStatsCalculator(ElasticSearchScanSpec hbaseScanSpec, ElasticSearchPluginConfig config, ElasticSearchPluginConfig storageConfig) throws IOException {
-
-
+  public TableStatsCalculator(ElasticSearchScanSpec hbaseScanSpec,
+                              ElasticSearchPluginConfig config,
+                              ElasticSearchPluginConfig storageConfig) throws IOException {
     sizeMap = new TreeMap<PartitionDefinition, Long>();
-//
-//      Collection<ServerName> servers = clusterStatus.getServers();
-//      //iterate all cluster regions, filter regions from our table and compute their size
-//      for (ServerName serverName : servers) {
-//        ServerLoad serverLoad = clusterStatus.getLoad(serverName);
-//
-//        for (RegionLoad regionLoad : serverLoad.getRegionsLoad().values()) {
-//          byte[] regionId = regionLoad.getName();
-//
-//          if (tableRegions.contains(regionId)) {
-//        	  // region 的数据量大小
-//            long regionSizeMB = regionLoad.getMemStoreSizeMB() + regionLoad.getStorefileSizeMB();
-//            sizeMap.put(regionId, (regionSizeMB > 0 ? regionSizeMB : 1) * (1024*1024));
-//            if (logger.isDebugEnabled()) {
-//              logger.debug("Region " + regionLoad.getNameAsString() + " has size " + regionSizeMB + "MB");
-//            }
-//          }
-//        }
-//      }
-//      logger.debug("Region sizes calculated");
-
-
   }
 
 

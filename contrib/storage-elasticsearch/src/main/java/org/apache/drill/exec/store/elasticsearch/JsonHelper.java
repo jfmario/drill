@@ -38,7 +38,7 @@ public class JsonHelper {
 
     /**
      * Find the node within the path given (separate fieldnames with '.'). It doesn't support cardinality.
-     * @param node
+     * @param node JSON node
      * @param path path to child fields separated by '.' each.
      * @return a node that points to the path required, or a {@link com.fasterxml.jackson.databind.node.MissingNode}
      */

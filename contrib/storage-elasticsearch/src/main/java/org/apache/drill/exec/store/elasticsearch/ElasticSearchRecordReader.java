@@ -55,7 +55,6 @@ import com.google.common.collect.Sets;
 
 import static org.apache.drill.common.expression.SchemaPath.STAR_COLUMN;
 
-//TODO
 public class ElasticSearchRecordReader extends AbstractRecordReader {
 
 	private static final Logger logger = LoggerFactory.getLogger(ElasticSearchRecordReader.class);
@@ -151,11 +150,11 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 		Stopwatch watch = Stopwatch.createStarted();
 
 		try {
-			// 批量拉取
+			// Batch pull
 			while (docCount < BaseValueVector.INITIAL_VALUE_ALLOCATION && cursor.hasNext()) {
 				writer.setPosition(docCount);
 				JsonNode element = cursor.next();
-				// 读取这一层的数据了
+				// Read this layer of data
 				JsonNode id = JsonHelper.getPath(element, "_id");
 				// HACK: This is done so we can poll _id from elastic into
 				// object content
