@@ -50,7 +50,7 @@ public class ElasticSearchBatchCreator implements BatchCreator<ElasticSearchSubS
 		}
 		try {
 			for (ElasticSearchScanSpec spec : subScan.getElasticSearchScanSpecs()) {
-				// 这里应该批量读取数据的
+				// Here should read the data in batches
 				readers.add(new ElasticSearchRecordReader(spec, columns, context, subScan
 						.getElasticSearchStoragePlugin()));
 			}
