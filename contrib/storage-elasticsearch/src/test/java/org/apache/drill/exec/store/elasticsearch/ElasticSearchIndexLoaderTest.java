@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package test.java.org.apache.drill.exec.store.elasticsearch;
+package org.apache.drill.exec.store.elasticsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;

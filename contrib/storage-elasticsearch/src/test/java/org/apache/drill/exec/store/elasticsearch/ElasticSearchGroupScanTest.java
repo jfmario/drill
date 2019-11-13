@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
-package test.java.org.apache.drill.exec.store.elasticsearch;
+package org.apache.drill.exec.store.elasticsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.drill.exec.physical.base.ScanStats;
 import org.apache.http.HttpEntity;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.junit.Before;
@@ -64,8 +65,12 @@ public class ElasticSearchGroupScanTest {
         InputStream responseContentFirstDoc = IOUtils.toInputStream("{\"took\":28,\"timed_out\":false,\"terminated_early\":true,\"_shards\":{\"total\":3,\"successful\":3,\"failed\":0},\"hits\":{\"total\":1,\"max_score\":1.0,\"hits\":[{\"_index\":\"employee\",\"_type\":\"manager\",\"_id\":\"manager1\",\"_score\":1.0,\"_source\":{    \"name\" : \"manager1\",    \"employeeId\" : 1,    \"department\" : \"IT\"}}]}}");
         Mockito.when(mockEntityFirstDoc.getContent()).thenReturn(responseContentFirstDoc);
         try {
-            Mockito.when(this.restClient.performRequest("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_count")).thenReturn(mockResponseNumDocs);
-            Mockito.when(this.restClient.performRequest("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_search?size=1&terminate_after=1")).thenReturn(mockResponseFirstDoc);
+            Mockito.when(this.restClient
+              .performRequest(new Request("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_count")))
+              .thenReturn(mockResponseNumDocs);
+            Mockito.when(this.restClient
+              .performRequest(new Request("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_search?size=1&terminate_after=1")))
+              .thenReturn(mockResponseFirstDoc);
 
             ElasticSearchGroupScan esgp = new ElasticSearchGroupScan("testuser",
                     plugin,
@@ -92,11 +97,14 @@ public class ElasticSearchGroupScanTest {
         Mockito.when(mockEntityNumDocs.getContent()).thenReturn(responseContentNumDocs);
 
         try {
-            Mockito.when(this.restClient.performRequest("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_count")).thenReturn(mockResponseNumDocs);
+            Mockito.when(this.restClient
+              .performRequest(new Request("GET", "/"+ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.MANAGER_MAPPING+"/_count")))
+              .thenReturn(mockResponseNumDocs);
 
             ElasticSearchGroupScan esgp = new ElasticSearchGroupScan("elastic",
                     plugin,
-                    new ElasticSearchScanSpec(ElasticSearchTestConstants.EMPLOYEE_IDX, ElasticSearchTestConstants.MANAGER_MAPPING),
+                    new ElasticSearchScanSpec(ElasticSearchTestConstants.EMPLOYEE_IDX,
+                      ElasticSearchTestConstants.MANAGER_MAPPING),
                     null);
             ScanStats scanStats = esgp.getScanStats();
             TestCase.assertNotNull(scanStats);

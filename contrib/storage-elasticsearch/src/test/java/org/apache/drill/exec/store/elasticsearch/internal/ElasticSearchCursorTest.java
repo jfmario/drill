@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package test.java.org.apache.drill.exec.store.elasticsearch.internal;
+package org.apache.drill.exec.store.elasticsearch.internal;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -103,7 +103,6 @@ public class ElasticSearchCursorTest {
 
         ElasticSearchCursor esc = ElasticSearchCursor.scroll(this.restClient, this.objectMapper, "employee", "developer", MapUtils.EMPTY_MAP, null);
         TestCase.assertNotNull(esc);
-        TestCase.assertNotNull(esc.hasNext());
         long counter=0;
         while(esc.hasNext()) {
             JsonNode next = esc.next();

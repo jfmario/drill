@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,13 +25,21 @@ import org.apache.drill.common.exceptions.DrillRuntimeException;
 import org.apache.drill.exec.store.elasticsearch.ElasticSearchConstants;
 import org.apache.drill.exec.store.elasticsearch.ElasticSearchStoragePlugin;
 import org.apache.drill.exec.store.elasticsearch.JsonHelper;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 
 public class ElasticSearchTypeMappingLoader extends CacheLoader<String, Collection<String>> {
 
-    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchTypeMappingLoader.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchTypeMappingLoader.class);
     private final ElasticSearchStoragePlugin plugin;
 
     public ElasticSearchTypeMappingLoader(ElasticSearchStoragePlugin plugin)  {
@@ -43,8 +51,8 @@ public class ElasticSearchTypeMappingLoader extends CacheLoader<String, Collecti
     	// 拉取这个索引的map元数据
         Set<String> typeMappings = Sets.newHashSet();
         try {
-            Response response = this.plugin.getClient().performRequest("GET", "/" + idxName);
-            JsonNode jsonNode = JsonHelper.readRespondeContentAsJsonTree(this.plugin.getObjectMapper(),response);
+            Response response = this.plugin.getClient().performRequest(new Request("GET", "/" + idxName));
+            JsonNode jsonNode = JsonHelper.readRespondeContentAsJsonTree(plugin.getObjectMapper(),response);
             Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fields.next();

@@ -27,6 +27,7 @@ import org.apache.drill.exec.store.elasticsearch.internal.ElasticSearchCursor;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -34,7 +35,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 @Ignore("requires remote ElasticSearch server")
 public class TestElasticSearchConnect {
@@ -52,8 +54,7 @@ public class TestElasticSearchConnect {
         if (headers != null && headers.length > 0) {
             clientBuilder.setDefaultHeaders(headers);
         }
-        clientBuilder.setMaxRetryTimeoutMillis(MAXRETRYTIMEOUTMILLIS);
-        //clientBuilder.setPathPrefix(PATHPREFIX);
+        //clientBuilder.setMaxRetryTimeoutMillis(MAXRETRYTIMEOUTMILLIS);
         return clientBuilder.build();
     }
 
@@ -61,7 +62,7 @@ public class TestElasticSearchConnect {
     public void TryConnectWithoutCredentials() throws IOException {
         RestClient restClient = this.createClient(null);
         try {
-            Response response = restClient.performRequest("GET", "/_nodes");
+            Response response = restClient.performRequest(new Request("GET", "/_nodes"));
             TestCase.assertNotNull(response);
         } finally {
             restClient.close();
@@ -71,10 +72,11 @@ public class TestElasticSearchConnect {
     @Test
     public void TryConnectWithCredentials() throws IOException {
 
-        List<BasicHeader> headers = Arrays.asList(new BasicHeader("Authorization", "Basic " + Base64.encodeBase64String(CREDENTIALS.getBytes())));
+        List<BasicHeader> headers = Collections.singletonList(
+          new BasicHeader("Authorization", "Basic " + Base64.encodeBase64String(CREDENTIALS.getBytes())));
         RestClient restClient = this.createClient((Header[]) headers.toArray());
         try {
-            Response response = restClient.performRequest("GET", "/_nodes");
+            Response response = restClient.performRequest(new Request("GET", "/_nodes"));
             TestCase.assertNotNull(response);
         } finally {
             restClient.close();
@@ -83,7 +85,8 @@ public class TestElasticSearchConnect {
 
     @Test
     public void testRealCursoring() throws IOException {
-        ElasticSearchCursor esc = ElasticSearchCursor.scroll(this.createClient(null), new ObjectMapper(),"employee","developer", MapUtils.EMPTY_MAP, null);
+        ElasticSearchCursor esc = ElasticSearchCursor.scroll(
+          this.createClient(null), new ObjectMapper(),"employee","developer", MapUtils.EMPTY_MAP, null);
         TestCase.assertTrue(esc.hasNext());
         int count=0;
         while(esc.hasNext()) {
@@ -93,6 +96,5 @@ public class TestElasticSearchConnect {
             count++;
         }
         TestCase.assertEquals(19,count);
-
     }
 }

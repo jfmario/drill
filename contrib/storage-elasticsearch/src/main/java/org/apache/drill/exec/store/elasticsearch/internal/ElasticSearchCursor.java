@@ -28,6 +28,8 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 
@@ -62,8 +64,8 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
         // Batch pull data
         queryParams.put(SCROLL,SCROLLDURATION);
         // Type is a subtype
-        Response response = client.performRequest("POST", "/" + idxName + "/" + type + "/_search",
-                queryParams, requestBody, additionalHeaders);
+        Response response = client.performRequest(
+          new Request("POST", "/" + idxName + "/" + type + "/_search", queryParams, requestBody, additionalHeaders));
         JsonNode rootNode = JsonHelper.readRespondeContentAsJsonTree(objMapper, response);
         // Traversing id
         JsonNode scrollIdNode = JsonHelper.getPath(rootNode, "_scroll_id");
@@ -112,15 +114,22 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
 
     @Override
     public JsonNode next() {
-        //TODO: Code here
+
         JsonNode next;
         if (this.hasNext()) {
             if (!this.internalIterator.hasNext()) {
                 logger.debug("Internal storage depleted, lets scroll for more");
                 try {
                 	// Request data
-                    Response response = this.client.performRequest("POST", "/_search/scroll", MapUtils.EMPTY_MAP,
-                            new NStringEntity(this.scrollRequest, ContentType.APPLICATION_JSON), this.additionalHealders);
+
+                    Request request = new Request("POST","/_search/scroll" );
+                    request.setEntity(this.scrollRequest., ContentType.APPLICATION_JSON);
+
+                    Response response =  client.performRequest( new Request("POST",
+                      "/_search/scroll",
+                      MapUtils.EMPTY_MAP,
+                      new NStringEntity(this.scrollRequest, ContentType.APPLICATION_JSON),
+                      additionalHealders));
 
                     JsonNode rootNode = JsonHelper.readRespondeContentAsJsonTree(objMapper, response);
                     JsonNode elementsNode = JsonHelper.getPath(rootNode, "hits.hits");
@@ -136,7 +145,7 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
         } else {
             throw new NoSuchElementException();
         }
-        this.position++;
+        position++;
         return internalIterator.next();
     }
 

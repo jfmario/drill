@@ -18,8 +18,6 @@
 
 package org.apache.drill.exec.store.elasticsearch.schema;
 
-import java.util.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
@@ -31,11 +29,20 @@ import com.google.common.cache.CacheLoader;
 
 import org.apache.drill.exec.store.elasticsearch.ElasticSearchStoragePlugin;
 import org.apache.drill.exec.store.elasticsearch.JsonHelper;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class ElasticSearchIndexLoader extends CacheLoader<String, Collection<String>> {
 
-    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchIndexLoader.class);
+    static final Logger logger = LoggerFactory.getLogger(ElasticSearchIndexLoader.class);
     private final ElasticSearchStoragePlugin plugin;
 
     public ElasticSearchIndexLoader(ElasticSearchStoragePlugin plugin) {
@@ -50,8 +57,8 @@ public class ElasticSearchIndexLoader extends CacheLoader<String, Collection<Str
         Set<String> indexes = Sets.newHashSet();
         try {
         	// Pull all the tables back
-            Response response = this.plugin.getClient().performRequest("GET", "/_aliases");
-            JsonNode jsonNode = JsonHelper.readRespondeContentAsJsonTree(this.plugin.getObjectMapper(),response);
+            Response response = plugin.getClient().performRequest(new Request("GET", "/_aliases"));
+            JsonNode jsonNode = JsonHelper.readRespondeContentAsJsonTree(plugin.getObjectMapper(),response);
             Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fields.next();

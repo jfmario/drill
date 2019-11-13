@@ -47,11 +47,13 @@ import org.apache.drill.exec.physical.base.ScanStats;
 import org.apache.drill.exec.physical.base.SubScan;
 import org.apache.drill.exec.proto.CoordinationProtos.DrillbitEndpoint;
 import org.apache.drill.exec.store.StoragePluginRegistry;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.hadoop.cfg.PropertiesSettings;
 import org.elasticsearch.hadoop.cfg.Settings;
 import org.elasticsearch.hadoop.rest.PartitionDefinition;
+import org.elasticsearch.hadoop.rest.RestService;
 import org.elasticsearch.hadoop.rest.RestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,7 +158,7 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 
 	private void init() {
 		// TODO: init whatever
-		// 这里还进行预先期望在那个进程中进行处理
+		// Here also pre-expects to process in that process
 
 		logger.debug("Getting region locations");
 
@@ -164,13 +166,16 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 
 			statsCalculator = new TableStatsCalculator(scanSpec, plugin.getConfig(), storagePluginConfig);
 
-			regionsToScan = new TreeMap<PartitionDefinition, ServerHost>();
+			regionsToScan = new TreeMap<>();
 
 			Settings esCfg = new PropertiesSettings();
 			List<PartitionDefinition> partitions = RestService.findPartitions(esCfg, comlogger);
 			for (PartitionDefinition part : partitions) {
 				// The address where this region is located
-				regionsToScan.put(part, new ServerHost(part.nodeIp));
+				// TODO Fix this... Needs to get IP address
+
+				//regionsToScan.put(part, new ServerHost(part.nodeIp));
+				regionsToScan.put(part, new ServerHost("127.0.0.1"));
 				scanSizeInBytes += statsCalculator.getRegionSizeInBytes(part);
 
 			}
@@ -413,8 +418,8 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 		JsonNode jsonNode;
 		RestClient client = this.plugin.getClient();
 		try {
-			response = client.performRequest("GET",
-					"/" + this.scanSpec.getIndexName() + "/" + this.scanSpec.getTypeMappingName() + "/_count");
+			Request request = new Request( "GET", "/" + this.scanSpec.getIndexName() + "/" + this.scanSpec.getTypeMappingName() + "/_count");
+			response = client.performRequest(request);
 			jsonNode = JsonHelper.readRespondeContentAsJsonTree(this.plugin.getObjectMapper(), response);
 			// Get statistics
 			JsonNode countNode = JsonHelper.getPath(jsonNode, "count");
@@ -427,9 +432,10 @@ public class ElasticSearchGroupScan extends AbstractGroupScan {
 			}
 			long docSize = 0;
 			if (numDocs > 0) {
-				response = client.performRequest("GET",
+
+				response = client.performRequest(new Request("GET",
 						"/" + this.scanSpec.getIndexName() + "/" + this.scanSpec.getTypeMappingName()
-								+ "/_search?size=1&terminate_after=1");
+								+ "/_search?size=1&terminate_after=1"));
 				jsonNode = JsonHelper.readRespondeContentAsJsonTree(this.plugin.getObjectMapper(), response);
 				JsonNode hits = JsonHelper.getPath(jsonNode, "hits.hits");
 				if (!hits.isMissingNode()) {

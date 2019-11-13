@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package test.java.org.apache.drill.exec.store.elasticsearch;
+package org.apache.drill.exec.store.elasticsearch;
 
 public class ElasticSearchTestConstants {
 
