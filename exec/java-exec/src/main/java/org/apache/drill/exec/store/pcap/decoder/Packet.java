@@ -90,6 +90,25 @@ public class Packet implements Comparable<Packet> {
     return offset + PacketConstants.PCAP_HEADER_SIZE + originalLength;
   }
 
+  private boolean decodeEtherPacketNG() {
+    etherProtocol = getShort(raw, PacketConstants.PACKET_PROTOCOL_OFFSET);
+    ipOffset = PacketConstants.IP_OFFSET;
+    if (isIpV4Packet()) {
+      protocol = processIpV4Packet();
+      return true;
+    } else if (isIpV6Packet()) {
+      int tmp = processIpV6Packet();
+      if (tmp != -1) {
+        protocol = tmp;
+      }
+      return true;
+    } else if (isPPPoV6Packet()) {
+      protocol = getByte(raw, 48);
+      return true;
+    }
+    return false;
+  }
+
   public String getPacketType() {
     if (isTcpPacket()) {
       return "TCP";

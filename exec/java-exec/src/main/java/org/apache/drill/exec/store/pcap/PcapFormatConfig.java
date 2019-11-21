@@ -35,6 +35,7 @@ public class PcapFormatConfig implements FormatPluginConfig {
 
   private final List<String> extensions;
   private final boolean sessionizeTCPStreams;
+  private static final List<String> DEFAULT_EXTS = ImmutableList.of("pcap", "pcapng");
 
   @JsonCreator
   public PcapFormatConfig(

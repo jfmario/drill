@@ -21,7 +21,7 @@ import fr.bmartel.pcapdecoder.structure.types.inter.IEnhancedPacketBLock;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.vector.ValueVector;
-
+@Deprecated
 public class DummyArrayImpl implements Column {
   @Override
   public TypeProtos.MajorType getMinorType() {

@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static org.apache.drill.exec.store.pcap.PcapFormatUtils.parseBytesToASCII;
 import static org.apache.drill.exec.store.pcapng.schema.Util.setNullableLongColumnValue;
-
+@Deprecated
 public class Schema {
 
   private final static Map<String, Column> columns = new HashMap<>();

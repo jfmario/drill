@@ -26,6 +26,7 @@ import org.apache.drill.exec.vector.ValueVector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@Deprecated
 public class Util {
   static void setNullableIntegerColumnValue(final int data, final ValueVector vv, final int count) {
     ((NullableIntVector.Mutator) vv.getMutator())

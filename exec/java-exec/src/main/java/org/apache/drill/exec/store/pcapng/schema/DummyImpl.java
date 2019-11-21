@@ -22,6 +22,7 @@ import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.vector.ValueVector;
 
+@Deprecated
 public class DummyImpl implements Column {
   @Override
   public TypeProtos.MajorType getMinorType() {

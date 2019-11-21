@@ -49,7 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-
+@Deprecated
 public class PcapngRecordReader extends AbstractRecordReader {
   private static final Logger logger = LoggerFactory.getLogger(PcapngRecordReader.class);
 

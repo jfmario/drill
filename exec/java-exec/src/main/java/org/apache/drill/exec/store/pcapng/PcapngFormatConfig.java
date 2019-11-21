@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonTypeName("pcapng")
+@Deprecated
 public class PcapngFormatConfig implements FormatPluginConfig {
 
   public List<String> extensions = Collections.singletonList("pcapng");

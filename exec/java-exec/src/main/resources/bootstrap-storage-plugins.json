@@ -39,10 +39,8 @@
           "extensions" : [ "json" ]
         },
         "pcap" : {
-          "type" : "pcap"
-        },
-        "pcapng" : {
-          "type" : "pcapng"
+          "type" : "pcap",
+          "extensions": ["pcap", "pcapng"]
         },
         "avro" : {
           "type" : "avro",

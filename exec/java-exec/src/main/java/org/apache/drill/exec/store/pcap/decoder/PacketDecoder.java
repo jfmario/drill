@@ -59,12 +59,14 @@ public class PacketDecoder {
   private static final int GLOBAL_HEADER_SIZE = 24;
   private static final int PCAP_MAGIC_LITTLE_ENDIAN = 0xD4C3B2A1;
   private static final int PCAP_MAGIC_NUMBER = 0xA1B2C3D4;
+  private static final int PCAPNG_MAGIC_NUMBER = 0x0A0D0D0A;
 
   private static final Logger logger = LoggerFactory.getLogger(PacketDecoder.class);
 
   private final int maxLength;
   private final int network;
   private boolean bigEndian;
+  private boolean isPCAPNG;
 
   private InputStream input;
 
@@ -81,6 +83,9 @@ public class PacketDecoder {
         break;
       case PCAP_MAGIC_LITTLE_ENDIAN:
         bigEndian = false;
+        break;
+      case PCAPNG_MAGIC_NUMBER:
+        isPCAPNG = true;
         break;
       default:
         //noinspection ConstantConditions
@@ -103,6 +108,9 @@ public class PacketDecoder {
     }
     return r;
   }
+
+
+
 
   public Packet packet() {
     return new Packet();

@@ -36,6 +36,7 @@ import java.util.List;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+@Deprecated
 public class PcapngFormatPlugin extends EasyFormatPlugin<PcapngFormatConfig> {
 
   public static final String DEFAULT_NAME = "pcapng";

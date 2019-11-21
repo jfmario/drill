@@ -21,6 +21,7 @@ import fr.bmartel.pcapdecoder.structure.types.inter.IEnhancedPacketBLock;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.vector.ValueVector;
 
+@Deprecated
 public interface Column {
   TypeProtos.MajorType getMinorType();
 
