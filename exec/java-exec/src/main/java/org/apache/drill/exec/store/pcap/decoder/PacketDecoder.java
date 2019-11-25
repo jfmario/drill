@@ -109,9 +109,6 @@ public class PacketDecoder {
     return r;
   }
 
-
-
-
   public Packet packet() {
     return new Packet();
   }
@@ -123,6 +120,8 @@ public class PacketDecoder {
   public boolean isBigEndian() {
     return bigEndian;
   }
+
+  public boolean isPCAPNG() { return isPCAPNG(); }
 
   public Packet nextPacket() throws IOException {
     Packet r = new Packet();

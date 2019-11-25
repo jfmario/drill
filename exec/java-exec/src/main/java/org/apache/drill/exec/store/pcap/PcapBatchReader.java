@@ -17,6 +17,9 @@
  */
 package org.apache.drill.exec.store.pcap;
 
+import fr.bmartel.pcapdecoder.PcapDecoder;
+import fr.bmartel.pcapdecoder.structure.types.IPcapngType;
+import fr.bmartel.pcapdecoder.structure.types.inter.IEnhancedPacketBLock;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchemaNegotiator;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
@@ -316,6 +319,9 @@ public class PcapBatchReader implements ManagedReader<FileSchemaNegotiator> {
 
     int old = offset;
     offset = decoder.decodePacket(buffer, offset, packet, decoder.getMaxLength(), validBytes);
+
+    // TODO logic here to switch to the PCAP-NG decoder
+
     if (offset > validBytes) {
       // Mark that the packet is corrupt and extract whatever data can be extracted from it
       packet.setIsCorrupt(true);
