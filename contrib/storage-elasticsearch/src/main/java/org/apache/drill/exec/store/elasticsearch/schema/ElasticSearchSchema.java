@@ -59,12 +59,12 @@ public class ElasticSearchSchema extends AbstractSchema {
 
   @Override
   public AbstractSchema getSubSchema(String name) {
-    // 拿这个索引的 元数据类型
+    // Take the metadata type of this index
     Collection<String> typeMappings;
     try {
       if (!this.schemaMap.containsKey(name)) {
         typeMappings = this.plugin.getSchemaFactory().getTypeMappingCache().get(name);
-        // index --> type map元数据类型
+        // index --> type map metadata type
         this.schemaMap.put(name, new ElasticSearchIndexSchema(typeMappings, this, name));
       }
 
@@ -84,7 +84,7 @@ public class ElasticSearchSchema extends AbstractSchema {
   @Override
   public Table getTable(String tableName) {
     logger.info(String.format("table = [%s]", tableName));
-    // 默认是索引表名
+    // Index table name by default
     return this.getDrillTable(tableName, "");
   }
 

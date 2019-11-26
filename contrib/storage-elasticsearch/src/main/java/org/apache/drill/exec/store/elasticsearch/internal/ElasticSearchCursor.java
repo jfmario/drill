@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -64,7 +63,11 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
 
   private Iterator<JsonNode> internalIterator;
 
-  public static ElasticSearchCursor scroll(RestClient client, ObjectMapper objMapper, String idxName, String type, Map<String, String> additionalQueryParams, HttpEntity requestBody, Header... additionalHeaders) throws IOException {
+  public static ElasticSearchCursor scroll(RestClient client,
+                                           ObjectMapper objMapper,
+                                           String idxName, String type,
+                                           Map<String, String> additionalQueryParams,
+                                           HttpEntity requestBody, Header... additionalHeaders) throws IOException {
     Map<String, String> queryParams = new HashMap<>();
     if (!MapUtils.isEmpty(additionalQueryParams)) {
       queryParams.putAll(additionalQueryParams);
@@ -72,7 +75,13 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
     // Batch pull data
     queryParams.put(SCROLL, SCROLLDURATION);
     // Type is a subtype
-    Response response = client.performRequest(new Request("POST", "/" + idxName + "/" + type + "/_search", queryParams, requestBody, additionalHeaders));
+
+    Request request = new Request("POST", "/" + idxName + "/" + type + "/_search");
+    request.addParameters(queryParams);
+    request.setEntity(requestBody);
+    // TODO Pass additionalHeader in request
+    Response response = client.performRequest(request);
+    //Response response = client.performRequest(new Request("POST", "/" + idxName + "/" + type + "/_search", queryParams, requestBody, additionalHeaders));
 
     JsonNode rootNode = JsonHelper.readRespondeContentAsJsonTree(objMapper, response);
     // Traversing id
@@ -104,7 +113,12 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
 
   }
 
-  private ElasticSearchCursor(RestClient client, ObjectMapper objMapper, String scrollId, long totalHits, Iterator<JsonNode> elementIterator, Header... headers) {
+  private ElasticSearchCursor(RestClient client,
+                              ObjectMapper objMapper,
+                              String scrollId,
+                              long totalHits,
+                              Iterator<JsonNode> elementIterator,
+                              Header... headers) {
     this.client = client;
     this.objMapper = objMapper;
     this.totalHits = totalHits;
@@ -130,12 +144,17 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
           // Request data
 
           Request request = new Request("POST", "/_search/scroll");
-          request.setEntity(this.scrollRequest., ContentType.APPLICATION_JSON);
+          request.setEntity(new NStringEntity(this.scrollRequest, ContentType.APPLICATION_JSON));
 
-          // Response indexResponse = client.performRequest("POST", "/weike/member/_bulk",
-          //            Collections.<String, String>emptyMap(), entity);
+          // TODO Pass additionalHeader in request
+          Response response = client.performRequest(request);
 
-          Response response = client.performRequest(new Request("POST", "/_search/scroll", Collections.<String, String>emptyMap(), new NStringEntity(this.scrollRequest, ContentType.APPLICATION_JSON), additionalHeaders));
+          /*Response response = client.performRequest(
+            new Request("POST",
+              "/_search/scroll",
+              Collections.<String, String>emptyMap(),
+              new NStringEntity(this.scrollRequest, ContentType.APPLICATION_JSON), additionalHeaders))
+            ;*/
 
           JsonNode rootNode = JsonHelper.readRespondeContentAsJsonTree(objMapper, response);
           JsonNode elementsNode = JsonHelper.getPath(rootNode, "hits.hits");
@@ -150,7 +169,8 @@ public class ElasticSearchCursor implements Iterator<JsonNode>, Closeable {
       }
     } else {
       throw new NoSuchElementException();
-    } position++;
+    }
+    position++;
     return internalIterator.next();
   }
 
