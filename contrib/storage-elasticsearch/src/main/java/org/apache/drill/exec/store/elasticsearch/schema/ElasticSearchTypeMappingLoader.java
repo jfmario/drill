@@ -48,7 +48,7 @@ public class ElasticSearchTypeMappingLoader extends CacheLoader<String, Collecti
 
     @Override
     public Collection<String> load(String idxName) throws Exception {
-    	// 拉取这个索引的map元数据
+    	// Pull the map metadata of this index
         Set<String> typeMappings = Sets.newHashSet();
         try {
             Response response = this.plugin.getClient().performRequest(new Request("GET", "/" + idxName));
@@ -69,7 +69,7 @@ public class ElasticSearchTypeMappingLoader extends CacheLoader<String, Collecti
                     }
                 } else {
                     logger.warn("No typeMappings on {}", idxName);
-                    // 这个索引没有map类型
+                    // This index has no map type
                     typeMappings.add(entry.getKey());
                 }
             }

@@ -38,11 +38,13 @@ import org.elasticsearch.client.RestClientBuilder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @JsonTypeName(ElasticSearchPluginConfig.NAME)
 public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
     public static final String NAME = "elasticsearch";
-    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchPluginConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchPluginConfig.class);
     private static final int DEFAULT_PORT = 9200;
     private static final long DEFAULT_CACHE_DURATION = 5;
     private static final TimeUnit DEFAULT_CACHE_TIMEUNIT = TimeUnit.MINUTES;
@@ -51,7 +53,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
     private final String credentials;
     private final String pathPrefix;
     private final Integer hashCode;
-    private final int maxRetryTimeoutMillis;
     private final long cacheDuration;
     private final TimeUnit cacheTimeUnit;
 
@@ -64,7 +65,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
     public ElasticSearchPluginConfig(@JsonProperty(value = "credentials") String credentials,
                                      @JsonProperty(value = "hostsAndPorts", required = true) String hostsAndPorts,
                                      @JsonProperty(value = "pathPrefix") String pathPrefix,
-                                     @JsonProperty(value = "maxRetryTimeoutMillis") int maxRetryTimeoutMillis,
                                      @JsonProperty(value = "cacheDuration") long cacheDuration,
                                      @JsonProperty(value = "cacheTimeUnit") TimeUnit cacheTimeUnit) {
         if (!StringUtils.isEmpty(credentials)) {
@@ -74,7 +74,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
             this.credentials = null;
         }
         this.hostsAndPorts = hostsAndPorts;
-        this.maxRetryTimeoutMillis = maxRetryTimeoutMillis;
         this.pathPrefix = pathPrefix;
 
         if (cacheDuration > 0) {
@@ -93,7 +92,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
         HashCodeBuilder builder = new HashCodeBuilder(13,7);
         builder.append(this.hostsAndPorts)
                 .append(this.credentials)
-                .append(this.maxRetryTimeoutMillis)
                 .append(this.pathPrefix)
                 .append(this.cacheDuration)
                 .append(this.cacheTimeUnit);
@@ -110,7 +108,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
         ElasticSearchPluginConfig thatConfig = (ElasticSearchPluginConfig) that;
         return this.hostsAndPorts.equals(thatConfig.hostsAndPorts)
                 && (this.credentials == null ? thatConfig.credentials == null : this.credentials.equals(thatConfig.credentials))
-                && this.maxRetryTimeoutMillis == thatConfig.maxRetryTimeoutMillis
                 && this.cacheDuration == thatConfig.cacheDuration
                 && (this.pathPrefix == null ? thatConfig.pathPrefix == null : this.pathPrefix.equals(thatConfig.pathPrefix))
                 && (this.cacheTimeUnit == null ? thatConfig.cacheTimeUnit == null : this.cacheTimeUnit.equals(thatConfig.cacheTimeUnit));
@@ -122,7 +119,7 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
     }
 
     public String getHostsAndPorts() {
-        return this.hostsAndPorts;
+        return hostsAndPorts;
     }
 
     public String getCredentials() {
@@ -133,10 +130,6 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
         return pathPrefix;
     }
 
-    public int getMaxRetryTimeoutMillis() {
-        return maxRetryTimeoutMillis;
-    }
-
     /**
      * Creates and returns a client base on configuration
      * @return a {@link RestClient} to work against elasticSearch
@@ -145,14 +138,11 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
     @JsonIgnore
     public RestClient createClient() {
     	// Create a client
-        RestClientBuilder clientBuilder = RestClient.builder( this.parseHostsAndPorts());
+        RestClientBuilder clientBuilder = RestClient.builder(parseHostsAndPorts());
 
         Header[] headers = this.buildHeaders();
         if (headers != null) {
             clientBuilder.setDefaultHeaders(headers);
-        }
-        if (this.maxRetryTimeoutMillis > 0) {
-            clientBuilder.setMaxRetryTimeoutMillis(this.maxRetryTimeoutMillis);
         }
         if (!StringUtils.isEmpty(this.pathPrefix)) {
         	// Request path prefix
@@ -172,7 +162,7 @@ public class ElasticSearchPluginConfig extends StoragePluginConfigBase {
 
     private HttpHost[] parseHostsAndPorts() {
         Collection<HttpHost> rtnValue = new ArrayList<>();
-        List<String> hostPortList = Arrays.asList(this.hostsAndPorts.split(","));
+        List<String> hostPortList = Arrays.asList(hostsAndPorts.split(","));
         for (String hostPort : hostPortList) {
             String[] split = hostPort.split(":");
             String protocol = split[0];

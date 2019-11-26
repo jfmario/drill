@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class ElasticSearchIndexLoader extends CacheLoader<String, Collection<String>> {
 
-    static final Logger logger = LoggerFactory.getLogger(ElasticSearchIndexLoader.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchIndexLoader.class);
     private final ElasticSearchStoragePlugin plugin;
 
     public ElasticSearchIndexLoader(ElasticSearchStoragePlugin plugin) {

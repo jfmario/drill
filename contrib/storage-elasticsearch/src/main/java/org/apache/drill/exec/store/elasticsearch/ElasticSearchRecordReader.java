@@ -81,7 +81,7 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 		this.plugin = elasticSearchStoragePlugin;
 		this.fragmentContext = context;
 		this.scanSpec = elasticSearchScanSpec;
-		// 读取的字段
+		// Fields read
 		setColumns(columns);
 		// TODO: What does this mean?
 		this.unionEnabled = fragmentContext.getOptions().getOption(ExecConstants.ENABLE_UNION_TYPE);
@@ -101,11 +101,11 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 			for (SchemaPath column : projectedColumns) {
 				String fieldName = column.getRootSegment().getPath();
 				transformed.add(column);
-				// just query for this field 只查询这些字段
+				// just query for this field
 				this.fields.add(fieldName);
 			}
 		} else {
-			// 查询所有字段
+			// Query all fields
 			transformed.add(STAR_COLUMN);
 		}
 		return transformed;
@@ -116,8 +116,6 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 		this.operatorContext = context;
 		this.output = output;
 		this.writer = new VectorContainerWriter(output, this.unionEnabled);
-		//this.jsonReader = new JsonReader(fragmentContext.getManagedBuffer(), Lists.newArrayList(getColumns()),
-		//		enableAllTextMode, false, readNumbersAsDouble);
 		this.jsonReader = new JsonReader.Builder(fragmentContext.getManagedBuffer())
 			.schemaPathColumns(Lists.newArrayList(getColumns()))
 			.allTextMode(enableAllTextMode)
@@ -142,7 +140,7 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 				
 			 
 		}
-		// 重置数据
+		// Reset data
 		writer.allocate();
 		writer.reset();
 

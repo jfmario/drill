@@ -36,10 +36,12 @@ import org.apache.drill.exec.store.elasticsearch.ElasticSearchStoragePlugin;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ElasticSearchSchema extends AbstractSchema {
 
-  static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchSchema.class);
+  private static final Logger logger = LoggerFactory.getLogger(ElasticSearchSchema.class);
 
   private final Map<String, ElasticSearchIndexSchema> schemaMap = Maps.newHashMap();
 

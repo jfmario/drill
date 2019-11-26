@@ -23,9 +23,11 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.drill.exec.planner.logical.DynamicDrillTable;
 import org.apache.drill.exec.store.StoragePlugin;
 import org.apache.drill.exec.store.elasticsearch.ElasticSearchScanSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DrillElasticsearchTable extends DynamicDrillTable {
-  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DrillElasticsearchTable.class);
+  private static final Logger logger = LoggerFactory.getLogger(DrillElasticsearchTable.class);
 
 
   public DrillElasticsearchTable(StoragePlugin plugin, String storageEngineName, String userName, ElasticSearchScanSpec scanSpec) {

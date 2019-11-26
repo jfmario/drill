@@ -35,13 +35,14 @@ import org.elasticsearch.client.RestClient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main ElasticSearch Plugin class to configure storage instance
  */
 public class ElasticSearchStoragePlugin extends AbstractStoragePlugin {
-    static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticSearchStoragePlugin.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchStoragePlugin.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final String name;
     private final DrillbitContext context;

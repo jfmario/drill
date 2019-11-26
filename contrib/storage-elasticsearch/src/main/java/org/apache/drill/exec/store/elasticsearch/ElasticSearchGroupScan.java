@@ -54,7 +54,6 @@ import org.elasticsearch.hadoop.cfg.PropertiesSettings;
 import org.elasticsearch.hadoop.cfg.Settings;
 import org.elasticsearch.hadoop.rest.PartitionDefinition;
 import org.elasticsearch.hadoop.rest.RestService;
-import org.elasticsearch.hadoop.rest.RestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
