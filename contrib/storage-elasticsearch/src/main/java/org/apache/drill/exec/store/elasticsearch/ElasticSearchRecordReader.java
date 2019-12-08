@@ -94,13 +94,13 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
                                    ElasticSearchStoragePlugin elasticSearchStoragePlugin) {
     // TODO
     this.fields = new HashSet<>();
-    this.plugin = elasticSearchStoragePlugin;
-    this.fragmentContext = context;
-    this.scanSpec = elasticSearchScanSpec;
+    plugin = elasticSearchStoragePlugin;
+    fragmentContext = context;
+    scanSpec = elasticSearchScanSpec;
     // Fields read
     setColumns(columns);
     // TODO: What does this mean?
-    this.unionEnabled = fragmentContext.getOptions().getOption(ExecConstants.ENABLE_UNION_TYPE);
+    unionEnabled = fragmentContext.getOptions().getOption(ExecConstants.ENABLE_UNION_TYPE);
     // TODO: These should be place out of Mongo attributes
     this.enableAllTextMode = fragmentContext.getOptions().getOption(ExecConstants.MONGO_ALL_TEXT_MODE).bool_val;
     this.readNumbersAsDouble = fragmentContext.getOptions().getOption(ExecConstants.MONGO_READER_READ_NUMBERS_AS_DOUBLE).bool_val;
@@ -140,7 +140,7 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
   @Override
   public int next() {
     if (this.cursor == null) {
-      logger.info("Initializing cursor");
+      logger.debug("Initializing cursor");
       // so in here ,it should put query fields in here.
 //				this.cursor = ElasticSearchCursor.scroll(this.plugin.getClient(), this.plugin.getObjectMapper(),
 //						this.scanSpec.getIndexName(), this.scanSpec.getTypeMappingName(), MapUtils.EMPTY_MAP, null);
@@ -178,7 +178,7 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
         jsonReader.write(writer);
         docCount++;
       }
-      this.jsonReader.ensureAtLeastOneField(writer);
+      jsonReader.ensureAtLeastOneField(writer);
       writer.setValueCount(docCount);
       logger.debug("Took {} ms to get {} records", watch.elapsed(TimeUnit.MILLISECONDS), docCount);
       return docCount;

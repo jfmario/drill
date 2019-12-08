@@ -57,6 +57,16 @@ public class ElasticSearchCursorTest {
         InputStream responseFirstScroll = IOUtils.toInputStream("{\"_scroll_id\":\"DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAqFmR1eU1hbmxiUURDQjhpNmRxWWpZTXcAAAAAAAAAKBZkdXlNYW5sYlFEQ0I4aTZkcVlqWU13AAAAAAAAACkWZHV5TWFubGJRRENCOGk2ZHFZallNdw==\",\"took\":22,\"timed_out\":false,\"_shards\":{\"total\":3,\"successful\":3,\"failed\":0},\"hits\":{\"total\":10,\"max_score\":1.0,\"hits\":[{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer02\",\"_score\":1.0,\"_source\":{\"name\":\"developer2\",\"employeeId\":3,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer05\",\"_score\":1.0,\"_source\":{\"name\":\"developer5\",\"employeeId\":5,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer08\",\"_score\":1.0,\"_source\":{\"name\":\"developer8\",\"employeeId\":8,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer12\",\"_score\":1.0,\"_source\":{\"name\":\"developer12\",\"employeeId\":12,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer16\",\"_score\":1.0,\"_source\":{\"name\":\"developer16\",\"employeeId\":17,\"department\":\"IT\",\"reportsTo\":\"manager2\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer04\",\"_score\":1.0,\"_source\":{\"name\":\"developer4\",\"employeeId\":4,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer06\",\"_score\":1.0,\"_source\":{\"name\":\"developer6\",\"employeeId\":6,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer07\",\"_score\":1.0,\"_source\":{\"name\":\"developer7\",\"employeeId\":7,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer09\",\"_score\":1.0,\"_source\":{\"name\":\"developer9\",\"employeeId\":9,\"department\":\"IT\",\"reportsTo\":\"manager1\"}},{\"_index\":\"employee\",\"_type\":\"developer\",\"_id\":\"developer10\",\"_score\":1.0,\"_source\":{\"name\":\"developer10\",\"employeeId\":10,\"department\":\"IT\",\"reportsTo\":\"manager1\"}}]}}");
         Mockito.when(mockEntityFirstScroll.getContent()).thenReturn(responseFirstScroll);
 
+
+        /*
+        Request request = new Request("POST", "/" + idxName + "/" + type + "/_search");
+    request.addParameters(queryParams);
+    request.setEntity(requestBody);
+    // TODO Pass additionalHeader in request
+    Response response = client.performRequest(request);
+         */
+
+
         Mockito.when(this.restClient.performRequest(Mockito.eq("POST"),
                 Mockito.eq("/"+ ElasticSearchTestConstants.EMPLOYEE_IDX+"/"+ElasticSearchTestConstants.DEVELOPER_MAPPING+"/_search"),
                 Mockito.any(Map.class),
