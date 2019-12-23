@@ -21,7 +21,6 @@ package org.apache.drill.exec.store.elasticsearch;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -168,21 +167,26 @@ public class ElasticSearchRecordReader extends AbstractRecordReader {
 
         //JsonNode element = cursor.next();
         // Read this layer of data
+
+        // TODO Fix this...  The plugin isn't actually writing anything.
+        /*
         JsonNode id = JsonHelper.getPath(element, "_id");
+
+
         // HACK: This is done so we can poll _id from elastic into
         // object content
         ObjectNode content = (ObjectNode) JsonHelper.getPath(element, "_source");
         content.put("_id", id.asText());
         jsonReader.setSource(content);
         // this is using json
-        jsonReader.write(writer);
+        jsonReader.write(writer);*/
         docCount++;
       }
       jsonReader.ensureAtLeastOneField(writer);
       writer.setValueCount(docCount);
       logger.debug("Took {} ms to get {} records", watch.elapsed(TimeUnit.MILLISECONDS), docCount);
       return docCount;
-    } catch (IOException e) {
+    } catch (Exception e) {
       String msg = "Failure while reading document. - Parser was at record: " + (docCount + 1);
       logger.error(msg, e);
       throw new DrillRuntimeException(msg, e);
