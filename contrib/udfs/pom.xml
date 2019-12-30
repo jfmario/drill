@@ -68,6 +68,12 @@
       <artifactId>yauaa</artifactId>
       <version>5.16</version>
     </dependency>
+    <!-- Dependency for H2O ML Models -->
+    <dependency>
+      <groupId>ai.h2o</groupId>
+      <artifactId>h2o-genmodel</artifactId>
+      <version>3.28.0.1</version>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>
