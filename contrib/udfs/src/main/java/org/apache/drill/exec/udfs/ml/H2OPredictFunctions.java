@@ -18,7 +18,6 @@
 
 package org.apache.drill.exec.udfs.ml;
 
-import hex.genmodel.MojoReaderBackendFactory;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.expr.DrillSimpleFunc;
 import org.apache.drill.exec.expr.annotations.FunctionTemplate;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 public class H2OPredictFunctions {
 
@@ -65,8 +63,10 @@ public class H2OPredictFunctions {
 
     @Override
     public void setup() {
+      hex.genmodel.MojoReaderBackend mojoBackendReader;
       String fileName = org.apache.drill.exec.expr.fn.impl.StringFunctionHelpers.getStringFromVarCharHolder(fileURI);
       File inFile = new File(fileName);
+
       // If the user sends an empty filename, throw an exception
       if (fileName.isEmpty()) {
         throw UserException
@@ -81,23 +81,15 @@ public class H2OPredictFunctions {
           .message("Can't find file " + fileName)
           .build(logger);
       }
-      hex.genmodel.MojoReaderBackend mojoBackendReader;
+
       try {
         mojoBackendReader = hex.genmodel.MojoReaderBackendFactory.createReaderBackend(inFile);
+        model = hex.genmodel.ModelMojoReader.readFrom(mojoBackendReader, true);
       } catch (IOException e) {
         throw UserException
           .dataReadError()
           .message("Could not open MOJO at " + fileName)
           .addContext(e.getMessage())
-          .build(logger);
-      }
-      try {
-        model = hex.genmodel.ModelMojoReader.readFrom(mojoBackendReader);
-      } catch (Exception e) {
-        throw UserException
-          .unsupportedError()
-          .message("Could not create model from file. " + e.getMessage())
-          .addContext(e.getLocalizedMessage())
           .build(logger);
       }
     }
