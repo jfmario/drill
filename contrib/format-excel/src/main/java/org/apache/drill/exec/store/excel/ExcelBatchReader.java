@@ -339,7 +339,6 @@ public class ExcelBatchReader implements ManagedReader<FileSchemaNegotiator> {
     } else {
       return false;
     }
-
   }
 
   /**
