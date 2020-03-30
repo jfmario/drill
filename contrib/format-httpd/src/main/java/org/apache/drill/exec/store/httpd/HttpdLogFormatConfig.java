@@ -27,7 +27,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
-@JsonTypeName("httpd")
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+@JsonTypeName(HttpdLogFormatPlugin.DEFAULT_NAME)
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class HttpdLogFormatConfig implements FormatPluginConfig {
 
@@ -67,13 +72,17 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
+    HttpdLogFormatConfig other = (HttpdLogFormatConfig) obj;
+    return Objects.equals(logFormat, other.logFormat)
+      && Objects.equals(timestampFormat, other.timestampFormat);
+  }
 
     HttpdLogFormatConfig that = (HttpdLogFormatConfig) o;
     return Objects.equals(logFormat, that.logFormat) &&

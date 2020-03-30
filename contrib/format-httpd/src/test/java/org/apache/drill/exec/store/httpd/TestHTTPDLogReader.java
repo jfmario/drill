@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.drill.exec.store.httpd;
 
 import org.apache.drill.categories.RowSetTests;
@@ -54,14 +55,15 @@ public class TestHTTPDLogReader extends ClusterTest {
     defineHTTPDPlugin();
   }
 
+
+
   private static void defineHTTPDPlugin() throws ExecutionSetupException, StoragePluginRegistry.PluginException {
 
     // Create an instance of the regex config.
     // Note: we can"t use the ".log" extension; the Drill .gitignore
     // file ignores such files, so they"ll never get committed. Instead,
     // make up a fake suffix.
-    HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig();
-    sampleConfig.setLogFormat("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"");
+    HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"", "", null);
 
     // Define a temporary format plugin for the "cp" storage plugin.
     Drillbit drillbit = cluster.drillbit();
