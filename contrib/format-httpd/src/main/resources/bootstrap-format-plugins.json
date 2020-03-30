@@ -1,0 +1,34 @@
+{
+  "storage":{
+    "dfs": {
+      "type": "file",
+      "formats": {
+        "httpd" : {
+          "type" : "httpd",
+          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+        }
+      }
+    },
+    "cp": {
+      "type": "file",
+      "formats": {
+        "httpd" : {
+          "type" : "httpd",
+          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+        }
+      }
+    },
+    "s3": {
+      "type": "file",
+      "formats": {
+        "httpd" : {
+          "type" : "httpd",
+          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+        }
+      }
+    }
+  }
+}
