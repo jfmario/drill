@@ -216,30 +216,13 @@ public class HttpdParser {
     LOGFIELDS.put("request.referer.original", "HTTP.URI:request.referer.original");
   }
 
-  public HttpdParser(final MapWriter mapWriter, final DrillBuf managedBuffer, final String logFormat,
-                     final String timestampFormat, final Map<String, String> fieldMapping)
-          throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
-
-    Preconditions.checkArgument(logFormat != null && !logFormat.trim().isEmpty(), "logFormat cannot be null or empty");
-
-    this.record = new HttpdLogRecord(managedBuffer, timestampFormat);
-    this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, logFormat, timestampFormat);
-
-    setupParser(mapWriter, logFormat, fieldMapping);
-
-    if (timestampFormat != null && !timestampFormat.trim().isEmpty()) {
-      logger.info("Custom timestamp format has been specified. This is an informational note only as custom timestamps is rather unusual.");
-    }
-    if (logFormat.contains("\n")) {
-      logger.info("Specified logformat is a multiline log format: {}", logFormat);
-    }
-  }
-
   public HttpdParser(final String logFormat,
                      final String timestampFormat, RowSetLoader rowWriter)
     throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
 
     Preconditions.checkArgument(logFormat != null && !logFormat.trim().isEmpty(), "logFormat cannot be null or empty");
+
+    setupParser(logFormat);
 
     this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, logFormat, timestampFormat);
     this.rowWriter = rowWriter;
@@ -250,10 +233,6 @@ public class HttpdParser {
     if (logFormat.contains("\n")) {
       logger.info("Specified logformat is a multiline log format: {}", logFormat);
     }
-  }
-
-  public void buildSchema () {
-
   }
 
   /**
@@ -327,7 +306,7 @@ public class HttpdParser {
     }
   }
 
-  private void setupParser(final MapWriter mapWriter, final String logFormat, final Map<String, String> fieldMapping)
+  private void setupParser(String logFormat)
           throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
 
     /*
@@ -336,19 +315,16 @@ public class HttpdParser {
      */
     final Map<String, String> requestedPaths;
     final List<String> allParserPaths = parser.getPossiblePaths();
-    if (fieldMapping != null && !fieldMapping.isEmpty()) {
-      logger.debug("Using fields defined by user.");
-      requestedPaths = fieldMapping;
-    } else {
+
       /*
        * Use all possible paths that the parser has determined from the specified log format.
        */
-      logger.debug("No fields defined by user, defaulting to all possible fields.");
+
       requestedPaths = Maps.newHashMap();
       for (final String parserPath : allParserPaths) {
         requestedPaths.put(drillFormattedFieldName(parserPath), parserPath);
+        logger.debug(drillFormattedFieldName(parserPath) + " " + parserPath);
       }
-    }
 
     /*
      * By adding the parse target to the dummy instance we activate it for use. Which we can then use to find out which
@@ -377,7 +353,7 @@ public class HttpdParser {
       }
 
       logger.debug("Setting up drill field: {}, parser field: {}, which casts as: {}", entry.getKey(), entry.getValue(), casts);
-      record.addField(parser, mapWriter, casts, entry.getValue(), entry.getKey());
+      //record.addField(parser, mapWriter, casts, entry.getValue(), entry.getKey());
     }
   }
 }

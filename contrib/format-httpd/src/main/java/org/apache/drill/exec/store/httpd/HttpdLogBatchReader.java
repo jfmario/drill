@@ -22,6 +22,7 @@ import nl.basjes.parse.core.Parser;
 import nl.basjes.parse.httpdlog.HttpdLoglineParser;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.exec.expr.fn.impl.ContextFunctions;
 import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchemaNegotiator;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
@@ -63,6 +64,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   private boolean firstLine = true;
 
+  private int lineNumber;
+
   public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig) {
     this.formatConfig = formatConfig;
   }
@@ -77,7 +80,11 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     try {
       parser = new HttpdParser(formatConfig.getLogFormat(), formatConfig.getTimestampFormat(), rowWriter);
     } catch (Exception e) {
-      // Do something
+      throw UserException
+        .validationError(e)
+        .message("Unable to create HTTPD Parser with format string: %s and timestamp format %s", formatConfig.getLogFormat(), formatConfig.timestampFormat)
+        .addContext(e.getMessage())
+        .build(logger);
     }
 
     return true;
@@ -94,10 +101,29 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   }
 
   private boolean nextLine(RowSetLoader rowWriter) {
+    String line;
+    try {
+      line = reader.readLine();
+    } catch (Exception e) {
+      throw UserException
+        .dataReadError(e)
+        .message("Error reading HTTPD file at line number %d", lineNumber)
+        .addContext(e.getMessage())
+        .build(logger);
+    }
+
     if (firstLine) {
       defineSchema();
       firstLine = false;
     }
+    // Start the row
+    rowWriter.start();
+
+
+    // Finish the row
+    rowWriter.save();
+    lineNumber++;
+
     return false;
   }
 
