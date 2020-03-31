@@ -41,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Category(RowSetTests.class)
 public class TestHTTPDLogReader extends ClusterTest {
@@ -238,5 +239,27 @@ public class TestHTTPDLogReader extends ClusterTest {
       .baselineColumns("request_referer_ref","request_receive_time_last_time","request_firstline_uri_protocol","request_receive_time_microsecond","request_receive_time_last_microsecond__utc","request_firstline_original_uri_query_$","request_firstline_original_protocol","request_firstline_original_uri_host","request_referer_host","request_receive_time_month__utc","request_receive_time_last_minute","request_firstline_protocol_version","request_receive_time_time__utc","request_referer_last_ref","request_receive_time_last_timezone","request_receive_time_last_weekofweekyear","request_referer_last","request_receive_time_minute","connection_client_host_last","request_receive_time_last_millisecond__utc","request_firstline_original_uri","request_firstline","request_receive_time_nanosecond","request_receive_time_last_millisecond","request_receive_time_day","request_referer_port","request_firstline_original_uri_port","request_receive_time_year","request_receive_time_last_date","request_referer_query_$","request_receive_time_last_time__utc","request_receive_time_last_hour__utc","request_firstline_original_protocol_version","request_firstline_original_method","request_receive_time_last_year__utc","request_firstline_uri","request_referer_last_host","request_receive_time_last_minute__utc","request_receive_time_weekofweekyear","request_firstline_uri_userinfo","request_receive_time_epoch","connection_client_logname","response_body_bytes","request_receive_time_nanosecond__utc","request_firstline_protocol","request_receive_time_microsecond__utc","request_receive_time_hour","request_firstline_uri_host","request_referer_last_port","request_receive_time_last_epoch","request_receive_time_last_weekyear__utc","request_receive_time_weekyear","request_receive_time_timezone","response_body_bytesclf","request_receive_time_last_date__utc","request_useragent_last","request_useragent","request_receive_time_millisecond__utc","request_referer_last_protocol","request_status_last","request_firstline_uri_query","request_receive_time_minute__utc","request_firstline_original_uri_protocol","request_referer_query","request_receive_time_date","request_firstline_uri_port","request_receive_time_last_second__utc","request_referer_last_userinfo","request_receive_time_last_second","request_receive_time_last_monthname__utc","request_firstline_method","request_receive_time_last_month__utc","request_receive_time_millisecond","request_receive_time_day__utc","request_receive_time_year__utc","request_receive_time_weekofweekyear__utc","request_receive_time_second","request_firstline_original_uri_ref","connection_client_logname_last","request_receive_time_last_year","request_firstline_original_uri_path","connection_client_host","request_referer_last_query_$","request_firstline_original_uri_query","request_referer_userinfo","request_receive_time_last_monthname","request_referer_path","request_receive_time_monthname","request_receive_time_last_month","request_referer_last_query","request_firstline_uri_ref","request_receive_time_last_day","request_receive_time_time","request_receive_time_last_weekofweekyear__utc","request_receive_time_last_weekyear","request_receive_time_last_microsecond","request_firstline_original","request_firstline_uri_query_$","request_referer_last_path","request_receive_time_month","request_receive_time_last_day__utc","request_referer","request_referer_protocol","request_receive_time_monthname__utc","response_body_bytes_last","request_receive_time","request_receive_time_last_nanosecond","request_firstline_uri_path","request_firstline_original_uri_userinfo","request_receive_time_date__utc","request_receive_time_last","request_receive_time_last_nanosecond__utc","request_receive_time_last_hour","request_receive_time_hour__utc","request_receive_time_second__utc","connection_client_user_last","request_receive_time_weekyear__utc","connection_client_user")
       .baselineValues(null,"04:11:25",null,0L,0L,new HashMap<>(),"HTTP",null,"howto.basjes.nl",10L,11L,"1.1","03:11:25",null,null,43L,"http://howto.basjes.nl/",11L,"195.154.46.135",0L,"/linux/doing-pxe-without-dhcp-control","GET /linux/doing-pxe-without-dhcp-control HTTP/1.1",0L,0L,25L,null,null,2015L,"2015-10-25",new HashMap<>(),"03:11:25",3L,"1.1","GET",2015L,"/linux/doing-pxe-without-dhcp-control","howto.basjes.nl",11L,43L,null,1445742685000L,null,24323L,0L,"HTTP",0L,4L,null,null,1445742685000L,2015L,2015L,null,24323L,"2015-10-25","Mozilla/5.0 (Windows NT 5.1; rv:35.0) Gecko/20100101 Firefox/35.0","Mozilla/5.0 (Windows NT 5.1; rv:35.0) Gecko/20100101 Firefox/35.0",0L,"http","200","",11L,null,"","2015-10-25",null,25L,null,25L,"October","GET",10L,0L,25L,2015L,43L,25L,null,null,2015L,"/linux/doing-pxe-without-dhcp-control","195.154.46.135",new HashMap<>(),"",null,"October","/","October",10L,"",null,25L,"04:11:25",43L,2015L,0L,"GET /linux/doing-pxe-without-dhcp-control HTTP/1.1",new HashMap<>(),"/",10L,25L,"http://howto.basjes.nl/","http","October",24323L,LocalDateTime.parse("2015-10-25T03:11:25"),0L,"/linux/doing-pxe-without-dhcp-control",null,"2015-10-25",LocalDateTime.parse("2015-10-25T03:11:25"),0L,4L,3L,25L,null,2015L,null)
       .go();
+  }
+
+  @Test
+  public void testStarRowSet() throws Exception {
+    String sql = "SELECT * FROM cp.`httpd/hackers-access-small.httpd` LIMIT 1";
+
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+    assertTrue(true);
+
+    /*TupleMetadata expectedSchema = new SchemaBuilder()
+      .addNullable("request_receive_time", MinorType.TIMESTAMP)
+      .build();
+    RowSet expected = client.rowSetBuilder(expectedSchema)
+      .addRow(1445742685000L)
+      .addRow(1445742686000L)
+      .addRow(1445742687000L)
+      .addRow(1445743471000L)
+      .addRow(1445743472000L)
+      .build();
+
+    RowSetUtilities.verify(expected, results);*/
   }
 }

@@ -19,13 +19,23 @@
 package org.apache.drill.exec.store.httpd;
 
 import java.util.List;
+
+import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.logical.StoragePluginConfig;
+import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.common.types.Types;
 import org.apache.drill.exec.ops.FragmentContext;
+import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework;
+import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileReaderFactory;
+import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchemaNegotiator;
+import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.server.DrillbitContext;
+import org.apache.drill.exec.server.options.OptionManager;
 import org.apache.drill.exec.store.dfs.DrillFileSystem;
 import org.apache.drill.exec.store.dfs.easy.EasyFormatPlugin;
+import org.apache.drill.exec.store.dfs.easy.EasySubScan;
 import org.apache.drill.exec.store.dfs.easy.FileWork;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.drill.exec.store.RecordReader;
@@ -37,6 +47,20 @@ public class HttpdLogFormatPlugin extends EasyFormatPlugin<HttpdLogFormatConfig>
   protected static final String DEFAULT_NAME = "httpd";
 
   private static final Logger logger = LoggerFactory.getLogger(HttpdLogFormatPlugin.class);
+
+  private static class HtttpLogReaderFactory extends FileReaderFactory {
+
+    private final HttpdLogFormatConfig config;
+
+    private HtttpLogReaderFactory(HttpdLogFormatConfig config) {
+      this.config = config;
+    }
+
+    @Override
+    public ManagedReader<? extends FileScanFramework.FileSchemaNegotiator> newReader() {
+      return new HttpdLogBatchReader(config);
+    }
+  }
 
   public HttpdLogFormatPlugin(final String name,
                               final DrillbitContext context,
@@ -58,8 +82,24 @@ public class HttpdLogFormatPlugin extends EasyFormatPlugin<HttpdLogFormatConfig>
     config.fsConf = fsConf;
     config.defaultName = DEFAULT_NAME;
     config.readerOperatorType = UserBitShared.CoreOperatorType.HTPPD_LOG_SUB_SCAN_VALUE;
-    config.useEnhancedScan = false;  // Set to true later
+    config.useEnhancedScan = true;  // Set to true later
     return config;
+  }
+
+  @Override
+  public ManagedReader<? extends FileSchemaNegotiator> newBatchReader(
+    EasySubScan scan, OptionManager options) {
+    return new HttpdLogBatchReader(formatConfig);
+  }
+
+  @Override
+  protected FileScanFramework.FileScanBuilder frameworkBuilder(OptionManager options, EasySubScan scan) throws ExecutionSetupException {
+    FileScanFramework.FileScanBuilder builder = new FileScanFramework.FileScanBuilder();
+    builder.setReaderFactory(new HtttpLogReaderFactory(formatConfig));
+
+    initScanBuilder(builder, scan);
+    builder.nullType(Types.optional(TypeProtos.MinorType.VARCHAR));
+    return builder;
   }
 
   @Override
