@@ -22,7 +22,6 @@ import nl.basjes.parse.core.Parser;
 import nl.basjes.parse.httpdlog.HttpdLoglineParser;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.types.TypeProtos;
-import org.apache.drill.exec.expr.fn.impl.ContextFunctions;
 import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchemaNegotiator;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
@@ -51,8 +50,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   private FileSplit split;
 
   private InputStream fsStream;
-
-  private ScalarWriter rawColWriter;
 
   private ResultSetLoader loader;
 
@@ -113,7 +110,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     }
 
     if (firstLine) {
-      defineSchema();
       firstLine = false;
     }
     // Start the row
@@ -125,10 +121,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     lineNumber++;
 
     return false;
-  }
-
-  private void defineSchema() {
-
   }
 
   @Override
@@ -176,7 +168,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
       logger.debug("Fieldname: {}, Data Type: {}", fieldName, dataType);
     }
-
   }
 
   private List<String> getPossiblePaths(String logformat) {

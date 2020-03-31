@@ -17,17 +17,17 @@
  */
 package org.apache.drill.exec.store.httpd;
 
+import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
+import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 import org.apache.drill.shaded.guava.com.google.common.collect.Maps;
-import io.netty.buffer.DrillBuf;
 import nl.basjes.parse.core.Casts;
 import nl.basjes.parse.core.Parser;
 import nl.basjes.parse.core.exceptions.DissectionFailure;
 import nl.basjes.parse.core.exceptions.InvalidDissectorException;
 import nl.basjes.parse.core.exceptions.MissingDissectorsException;
 import nl.basjes.parse.httpdlog.HttpdLoglineParser;
-import org.apache.drill.exec.vector.complex.writer.BaseWriter.MapWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +44,11 @@ public class HttpdParser {
   public static final String SAFE_WILDCARD = "_$";
   public static final String SAFE_SEPARATOR = "_";
   public static final String REMAPPING_FLAG = "#";
+  private static String RAW_LINE_COL_NAME = "_raw";
+
   private final Parser<HttpdLogRecord> parser;
   private RowSetLoader rowWriter;
+  private SchemaBuilder builder;
 
   private HttpdLogRecord record;
 
@@ -222,10 +225,12 @@ public class HttpdParser {
 
     Preconditions.checkArgument(logFormat != null && !logFormat.trim().isEmpty(), "logFormat cannot be null or empty");
 
-    setupParser(logFormat);
+
 
     this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, logFormat, timestampFormat);
     this.rowWriter = rowWriter;
+
+    setupParser(logFormat);
 
     if (timestampFormat != null && !timestampFormat.trim().isEmpty()) {
       logger.info("Custom timestamp format has been specified. This is an informational note only as custom timestamps is rather unusual.");
@@ -309,22 +314,24 @@ public class HttpdParser {
   private void setupParser(String logFormat)
           throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
 
+    SchemaBuilder builder = new SchemaBuilder()
+      .addNullable(RAW_LINE_COL_NAME, TypeProtos.MinorType.VARCHAR);
+
     /*
      * If the user has selected fields, then we will use them to configure the parser because this would be the most
      * efficient way to parse the log.
      */
-    final Map<String, String> requestedPaths;
-    final List<String> allParserPaths = parser.getPossiblePaths();
+    Map<String, String> requestedPaths;
+    List<String> allParserPaths = parser.getPossiblePaths();
 
-      /*
-       * Use all possible paths that the parser has determined from the specified log format.
-       */
+    /*
+     * Use all possible paths that the parser has determined from the specified log format.
+     */
 
-      requestedPaths = Maps.newHashMap();
-      for (final String parserPath : allParserPaths) {
-        requestedPaths.put(drillFormattedFieldName(parserPath), parserPath);
-        logger.debug(drillFormattedFieldName(parserPath) + " " + parserPath);
-      }
+    requestedPaths = Maps.newHashMap();
+    for (final String parserPath : allParserPaths) {
+      requestedPaths.put(drillFormattedFieldName(parserPath), parserPath);
+    }
 
     /*
      * By adding the parse target to the dummy instance we activate it for use. Which we can then use to find out which
@@ -352,7 +359,23 @@ public class HttpdParser {
         casts = dummy.getCasts(entry.getValue());
       }
 
-      logger.debug("Setting up drill field: {}, parser field: {}, which casts as: {}", entry.getKey(), entry.getValue(), casts);
+      Casts dataType = dataType = (Casts) casts.toArray()[casts.size() - 1];
+
+      switch (dataType) {
+        case STRING:
+          builder = builder.addNullable(entry.getKey(), TypeProtos.MinorType.VARCHAR);
+          break;
+        case LONG:
+          builder.addNullable(entry.getKey(), TypeProtos.MinorType.BIGINT);
+          break;
+        case DOUBLE:
+          builder.addNullable(entry.getKey(), TypeProtos.MinorType.FLOAT8);
+          break;
+        default:
+          logger.warn("HTTPD Unsupported data type {} for field {}", dataType.toString(), entry.getKey());
+          break;
+      }
+      builder.build();
       //record.addField(parser, mapWriter, casts, entry.getValue(), entry.getKey());
     }
   }
