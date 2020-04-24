@@ -79,7 +79,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     } catch (Exception e) {
       throw UserException
         .validationError(e)
-        .message("Unable to create HTTPD Parser with format string: %s and timestamp format %s", formatConfig.getLogFormat(), formatConfig.timestampFormat)
+        .message("Unable to create HTTPD Parser with format string: %s and timestamp format %s", formatConfig.getLogFormat(), formatConfig.getTimestampFormat())
         .addContext(e.getMessage())
         .build(logger);
     }

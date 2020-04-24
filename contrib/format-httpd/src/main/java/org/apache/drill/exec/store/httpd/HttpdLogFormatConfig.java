@@ -17,17 +17,14 @@
  */
 package org.apache.drill.exec.store.httpd;
 
-import java.util.Objects;
-
-import org.apache.drill.common.PlanStringBuilder;
-import org.apache.drill.common.logical.FormatPluginConfig;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.apache.drill.common.PlanStringBuilder;
+import org.apache.drill.common.logical.FormatPluginConfig;
+import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableList;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -41,11 +38,18 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
   // No extensions?
   private final String logFormat;
   private final String timestampFormat;
+  private final List<String> extensions;
+
 
   @JsonCreator
   public HttpdLogFormatConfig(
+      @JsonProperty("extensions") List<String> extensions,
       @JsonProperty("logFormat") String logFormat,
       @JsonProperty("timestampFormat") String timestampFormat) {
+
+    this.extensions = extensions == null
+      ? Collections.singletonList("httpd")
+      : ImmutableList.copyOf(extensions);
     this.logFormat = logFormat;
     this.timestampFormat = timestampFormat == null
         ? DEFAULT_TS_FORMAT : timestampFormat;
@@ -66,6 +70,10 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
     return timestampFormat;
   }
 
+  public List<String> getExtensions() {
+    return extensions;
+  }
+
   @Override
   public int hashCode() {
     return Objects.hash(logFormat, timestampFormat);
@@ -82,11 +90,6 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
     HttpdLogFormatConfig other = (HttpdLogFormatConfig) obj;
     return Objects.equals(logFormat, other.logFormat)
       && Objects.equals(timestampFormat, other.timestampFormat);
-  }
-
-    HttpdLogFormatConfig that = (HttpdLogFormatConfig) o;
-    return Objects.equals(logFormat, that.logFormat) &&
-           Objects.equals(timestampFormat, that.timestampFormat);
   }
 
   @Override

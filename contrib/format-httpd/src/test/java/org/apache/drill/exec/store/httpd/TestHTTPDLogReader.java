@@ -53,7 +53,7 @@ public class TestHTTPDLogReader extends ClusterTest {
     // Needed for compressed file unit test
     dirTestWatcher.copyResourceToRoot(Paths.get("httpd/"));
 
-    defineHTTPDPlugin();
+    //defineHTTPDPlugin();
   }
 
 
@@ -64,7 +64,7 @@ public class TestHTTPDLogReader extends ClusterTest {
     // Note: we can"t use the ".log" extension; the Drill .gitignore
     // file ignores such files, so they"ll never get committed. Instead,
     // make up a fake suffix.
-    HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"", "", null);
+    HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig(null, "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"", "");
 
     // Define a temporary format plugin for the "cp" storage plugin.
     Drillbit drillbit = cluster.drillbit();

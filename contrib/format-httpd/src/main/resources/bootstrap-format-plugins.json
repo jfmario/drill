@@ -5,7 +5,7 @@
       "formats": {
         "httpd" : {
           "type" : "httpd",
-          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
           "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
         }
       }
@@ -15,7 +15,7 @@
       "formats": {
         "httpd" : {
           "type" : "httpd",
-          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
           "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
         }
       }
@@ -25,7 +25,7 @@
       "formats": {
         "httpd" : {
           "type" : "httpd",
-          "logFormat" : "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+          "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
           "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
         }
       }
