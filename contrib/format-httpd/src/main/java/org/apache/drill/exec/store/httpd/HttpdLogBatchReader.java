@@ -83,7 +83,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
         .addContext(e.getMessage())
         .build(logger);
     }
-
+    buildSchema();
     return true;
   }
 
@@ -151,7 +151,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   }
 
   private void buildSchema() {
-    logger.debug("Building schema.");
+    logger.debug("Building schema with config {}.", formatConfig.getLogFormat());
     SchemaBuilder builder = new SchemaBuilder()
       .addNullable(RAW_LINE_COL_NAME, TypeProtos.MinorType.VARCHAR);
 

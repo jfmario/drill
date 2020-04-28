@@ -35,7 +35,6 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
 
   public static final String DEFAULT_TS_FORMAT = "dd/MMM/yyyy:HH:mm:ss ZZ";
 
-  // No extensions?
   private final String logFormat;
   private final String timestampFormat;
   private final List<String> extensions;

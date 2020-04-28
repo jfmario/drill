@@ -60,10 +60,6 @@ public class TestHTTPDLogReader extends ClusterTest {
 
   private static void defineHTTPDPlugin() throws ExecutionSetupException, StoragePluginRegistry.PluginException {
 
-    // Create an instance of the regex config.
-    // Note: we can"t use the ".log" extension; the Drill .gitignore
-    // file ignores such files, so they"ll never get committed. Instead,
-    // make up a fake suffix.
     HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig(null, "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"", "");
 
     // Define a temporary format plugin for the "cp" storage plugin.
