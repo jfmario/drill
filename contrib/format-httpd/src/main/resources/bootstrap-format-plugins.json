@@ -6,7 +6,8 @@
         "httpd" : {
           "type" : "httpd",
           "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
-          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ",
+          "maxErrors": 0
         }
       }
     },
@@ -16,7 +17,8 @@
         "httpd" : {
           "type" : "httpd",
           "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
-          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ",
+          "maxErrors": 0
         }
       }
     },
@@ -26,7 +28,8 @@
         "httpd" : {
           "type" : "httpd",
           "logFormat" : "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-agent}i\"",
-          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ"
+          "timestampFormat" : "dd/MMM/yyyy:HH:mm:ss ZZ",
+          "maxErrors": 0
         }
       }
     }

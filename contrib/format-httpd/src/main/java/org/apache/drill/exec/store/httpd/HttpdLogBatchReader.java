@@ -47,6 +47,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   private final HttpdLogFormatConfig formatConfig;
 
+  private final Parser<HttpdLogRecord> parser;
+
   private FileSplit split;
 
   private InputStream fsStream;
@@ -54,8 +56,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   private ResultSetLoader loader;
 
   private RowSetLoader rowWriter;
-
-  private HttpdParser parser;
 
   private BufferedReader reader;
 
@@ -65,6 +65,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig) {
     this.formatConfig = formatConfig;
+    this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, formatConfig.getLogFormat(), formatConfig.getTimestampFormat());
   }
 
   @Override
@@ -74,15 +75,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     loader = negotiator.build();
     rowWriter = loader.writer();
     // Get the parser
-    try {
-      parser = new HttpdParser(formatConfig.getLogFormat(), formatConfig.getTimestampFormat(), rowWriter);
-    } catch (Exception e) {
-      throw UserException
-        .validationError(e)
-        .message("Unable to create HTTPD Parser with format string: %s and timestamp format %s", formatConfig.getLogFormat(), formatConfig.getTimestampFormat())
-        .addContext(e.getMessage())
-        .build(logger);
-    }
     buildSchema();
     return true;
   }
@@ -156,7 +148,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
       .addNullable(RAW_LINE_COL_NAME, TypeProtos.MinorType.VARCHAR);
 
     // Get the possible paths from the log parser
-    List<String> possiblePaths = getPossiblePaths(formatConfig.getLogFormat());
+    List<String> possiblePaths = getPossiblePaths();
 
     String dataType;
     String fieldName;
@@ -170,19 +162,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     }
   }
 
-  private List<String> getPossiblePaths(String logformat) {
-    Parser<Object> dummyParser;
-    try {
-      dummyParser = new HttpdLoglineParser<Object>(Object.class, logformat);
-    } catch (Exception e) {
-      throw UserException
-        .validationError(e)
-        .message("Invalid HTTPD Format String: {}", logformat)
-        .addContext(e.getMessage())
-        .build(logger);
-    }
-
-    return dummyParser.getPossiblePaths();
+  private List<String> getPossiblePaths() {
+    return parser.getPossiblePaths();
   }
 
 }

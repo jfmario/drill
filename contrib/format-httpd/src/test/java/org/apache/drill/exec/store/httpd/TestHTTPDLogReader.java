@@ -19,16 +19,11 @@
 package org.apache.drill.exec.store.httpd;
 
 import org.apache.drill.categories.RowSetTests;
-import org.apache.drill.common.exceptions.ExecutionSetupException;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.exec.physical.rowSet.RowSet;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.rpc.RpcException;
-import org.apache.drill.exec.server.Drillbit;
-import org.apache.drill.exec.store.StoragePluginRegistry;
-import org.apache.drill.exec.store.dfs.FileSystemConfig;
-import org.apache.drill.exec.store.dfs.FileSystemPlugin;
 import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
 import org.apache.drill.test.rowSet.RowSetUtilities;
@@ -52,23 +47,6 @@ public class TestHTTPDLogReader extends ClusterTest {
 
     // Needed for compressed file unit test
     dirTestWatcher.copyResourceToRoot(Paths.get("httpd/"));
-
-    //defineHTTPDPlugin();
-  }
-
-
-
-  private static void defineHTTPDPlugin() throws ExecutionSetupException, StoragePluginRegistry.PluginException {
-
-    HttpdLogFormatConfig sampleConfig = new HttpdLogFormatConfig(null, "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"", "");
-
-    // Define a temporary format plugin for the "cp" storage plugin.
-    Drillbit drillbit = cluster.drillbit();
-    final StoragePluginRegistry pluginRegistry = drillbit.getContext().getStorage();
-    final FileSystemPlugin plugin = (FileSystemPlugin) pluginRegistry.getPlugin("cp");
-    final FileSystemConfig pluginConfig = (FileSystemConfig) plugin.getConfig();
-    pluginConfig.getFormats().put("sample", sampleConfig);
-    pluginRegistry.put("cp", pluginConfig);
   }
 
   @Test

@@ -36,15 +36,21 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
   public static final String DEFAULT_TS_FORMAT = "dd/MMM/yyyy:HH:mm:ss ZZ";
 
   private final String logFormat;
+
   private final String timestampFormat;
+
   private final List<String> extensions;
+
+  private final int maxErrors;
 
 
   @JsonCreator
   public HttpdLogFormatConfig(
       @JsonProperty("extensions") List<String> extensions,
       @JsonProperty("logFormat") String logFormat,
-      @JsonProperty("timestampFormat") String timestampFormat) {
+      @JsonProperty("timestampFormat") String timestampFormat,
+      @JsonProperty("maxErrors") int maxErrors
+  ) {
 
     this.extensions = extensions == null
       ? Collections.singletonList("httpd")
@@ -52,6 +58,7 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
     this.logFormat = logFormat;
     this.timestampFormat = timestampFormat == null
         ? DEFAULT_TS_FORMAT : timestampFormat;
+    this.maxErrors = maxErrors;
   }
 
   /**
@@ -72,6 +79,8 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
   public List<String> getExtensions() {
     return extensions;
   }
+
+  public int getMaxErrors() { return maxErrors;}
 
   @Override
   public int hashCode() {
