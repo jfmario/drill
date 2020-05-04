@@ -19,7 +19,6 @@ package org.apache.drill.exec.store.splunk;
 
 import org.apache.drill.exec.store.StoragePluginRegistry;
 import org.apache.drill.test.ClusterFixture;
-import org.apache.drill.test.ClusterFixtureBuilder;
 import org.apache.drill.test.ClusterTest;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,7 +29,7 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    startCluster(startCluster(ClusterFixture.builder(dirTestWatcher));
+    startCluster(ClusterFixture.builder(dirTestWatcher));
 
     StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
     SplunkFormatConfig config = new SplunkFormatConfig( "cgivre", "password", "localhost", 8089);
@@ -39,7 +38,7 @@ public class TestSplunkPlugin extends ClusterTest {
   }
 
   @Test
-  public void test() {
+  public void test() throws Exception {
     fail("Not yet implemented");
   }
 }
