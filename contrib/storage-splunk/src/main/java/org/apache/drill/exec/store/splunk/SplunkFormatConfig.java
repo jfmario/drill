@@ -54,6 +54,26 @@ public class SplunkFormatConfig extends StoragePluginConfigBase {
     this.port = port;
   }
 
+  @JsonProperty("username")
+  public String getUsername() {
+    return username;
+  }
+
+  @JsonProperty("password")
+  public String getPassword() {
+    return password;
+  }
+
+  @JsonProperty("hostname")
+  public String getHostname() {
+    return hostname;
+  }
+
+  @JsonProperty("port")
+  public int getPort() {
+    return port;
+  }
+
 
   @Override
   public boolean equals(Object that) {

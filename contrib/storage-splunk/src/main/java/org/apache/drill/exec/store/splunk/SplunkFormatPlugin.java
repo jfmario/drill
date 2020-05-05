@@ -29,11 +29,12 @@ import java.io.IOException;
 public class SplunkFormatPlugin extends AbstractStoragePlugin {
 
   private final SplunkFormatConfig config;
+  private final SplunkSchemaFactory schemaFactory;
 
   public SplunkFormatPlugin(SplunkFormatConfig configuration, DrillbitContext context, String name) {
     super(context, name);
     this.config = configuration;
-    //this.schemaFactory = new HttpSchemaFactory(this);
+    this.schemaFactory = new SplunkSchemaFactory(this);
   }
 
   @Override
@@ -48,6 +49,6 @@ public class SplunkFormatPlugin extends AbstractStoragePlugin {
 
   @Override
   public void registerSchemas(SchemaConfig schemaConfig, SchemaPlus parent) throws IOException {
-
+    schemaFactory.registerSchemas(schemaConfig, parent);
   }
 }

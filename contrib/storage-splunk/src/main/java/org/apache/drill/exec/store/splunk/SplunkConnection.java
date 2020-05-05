@@ -18,5 +18,59 @@
 
 package org.apache.drill.exec.store.splunk;
 
+import com.splunk.EntityCollection;
+import com.splunk.HttpService;
+import com.splunk.Index;
+import com.splunk.SSLSecurityProtocol;
+import com.splunk.Service;
+import com.splunk.ServiceArgs;
+import org.apache.drill.common.exceptions.UserException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SplunkConnection {
+
+  private static final Logger logger = LoggerFactory.getLogger(SplunkConnection.class);
+
+  private final String username;
+  private final String password;
+  private final String hostname;
+  private final int port;
+  private Service service;
+
+  public SplunkConnection(SplunkFormatConfig config) {
+    this.username = config.getUsername();
+    this.password = config.getPassword();
+    this.hostname = config.getHostname();
+    this.port = config.getPort();
+    service = connect();
+  }
+
+
+  public Service connect() {
+    HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
+    ServiceArgs loginArgs = new ServiceArgs();
+    loginArgs.setHost(hostname);
+    loginArgs.setPort(port);
+    loginArgs.setPassword(password);
+    loginArgs.setUsername(username);
+
+    try {
+      service = Service.connect(loginArgs);
+    } catch (Exception e) {
+      throw UserException
+        .connectionError()
+        .message("Unable to connect to Splunk at %s:%s", hostname, port)
+        .addContext(e.getMessage())
+        .build(logger);
+    }
+
+    return service;
+  }
+
+  public EntityCollection<Index> getIndexes() {
+    return service.getIndexes();
+  }
+
+
 }

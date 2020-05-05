@@ -217,7 +217,7 @@
       <repository>
         <id>splunk-artifactory</id>
         <name>Splunk Releases</name>
-        <url>https://splunk.jfrog.io/splunk/ext-releases-local</url>
+        <url>https://repo.spring.io/plugins-release/</url>
       </repository>
   </repositories>
 
