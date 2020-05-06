@@ -21,17 +21,21 @@ package org.apache.drill.exec.store.splunk;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.apache.drill.common.PlanStringBuilder;
 
 @JsonTypeName("splunk-scan-spec")
 public class SplunkScanSpec {
   private final String pluginName;
   private final String indexName;
+  private final SplunkPluginConfig config;
 
   @JsonCreator
   public SplunkScanSpec(@JsonProperty("pluginName") String pluginName,
-                        @JsonProperty("indexName") String indexName) {
+                        @JsonProperty("indexName") String indexName,
+                        @JsonProperty("config") SplunkPluginConfig config) {
     this.pluginName = pluginName;
     this.indexName = indexName;
+    this.config = config;
   }
 
   @JsonProperty("pluginName")
@@ -39,5 +43,17 @@ public class SplunkScanSpec {
 
   @JsonProperty("indexName")
   public String getIndexName() { return indexName; }
+
+  @JsonProperty("config")
+  public SplunkPluginConfig getConfig() { return config; }
+
+  @Override
+  public String toString() {
+    return new PlanStringBuilder(this)
+      .field("config", config)
+      .field("schemaName", pluginName)
+      .field("indexName", indexName)
+      .toString();
+  }
 
 }

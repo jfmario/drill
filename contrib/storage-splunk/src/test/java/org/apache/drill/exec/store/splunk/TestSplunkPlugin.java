@@ -17,9 +17,11 @@
  */
 package org.apache.drill.exec.store.splunk;
 
+import org.apache.drill.exec.physical.rowSet.DirectRowSet;
 import org.apache.drill.exec.store.StoragePluginRegistry;
 import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
+import org.apache.drill.test.QueryRowSetIterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,14 +32,28 @@ public class TestSplunkPlugin extends ClusterTest {
     startCluster(ClusterFixture.builder(dirTestWatcher));
 
     StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
-    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089);
+    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, null, null);
     config.setEnabled(true);
     pluginRegistry.put(SplunkPluginConfig.NAME, config);
   }
 
   @Test
-  public void test() throws Exception {
-    String sql = "SELECT * FROM splunk.main";
-    queryBuilder().sql(sql).run();
+  public void testStarQuery() throws Exception {
+    String sql = "SELECT * FROM splunk.main LIMIT 10";
+    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
+    while (results.hasNext()) {
+      DirectRowSet result = results.next();
+      result.print();
+    }
+  }
+
+  @Test
+  public void testExplictFieldsQuery() throws Exception {
+    String sql = "SELECT clientip, file, host FROM splunk.main LIMIT 10";
+    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
+    while (results.hasNext()) {
+      DirectRowSet result = results.next();
+      result.print();
+    }
   }
 }

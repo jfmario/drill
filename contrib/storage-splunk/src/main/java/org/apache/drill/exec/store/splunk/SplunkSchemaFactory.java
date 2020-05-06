@@ -1,6 +1,6 @@
 package org.apache.drill.exec.store.splunk;
 
-import com.google.common.collect.Sets;
+import org.apache.drill.shaded.guava.com.google.common.collect.Sets;
 import com.splunk.EntityCollection;
 import com.splunk.Index;
 import org.apache.calcite.schema.SchemaPlus;
@@ -42,6 +42,7 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
     // Get Splunk Indexes
     indexes = connection.getIndexes();
 
+
     for (Index index : indexes.values()) {
       SplunkSchema schema = new SplunkSchema(plugin);
       SchemaPlus schemaPlus = parent.add(getName(), schema);
@@ -66,7 +67,7 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
         return table;
       } else {
         // Register the table
-        return registerTable(name, new DynamicDrillTable(plugin, plugin.getName(), new SplunkScanSpec(plugin.getName(), name)));
+        return registerTable(name, new DynamicDrillTable(plugin, plugin.getName(), new SplunkScanSpec(plugin.getName(), name, plugin.getConfig())));
       }
     }
 

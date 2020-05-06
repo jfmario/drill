@@ -19,27 +19,34 @@
 package org.apache.drill.exec.store.splunk;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.drill.common.exceptions.ExecutionSetupException;
+import org.apache.drill.common.PlanStringBuilder;
 import org.apache.drill.common.expression.SchemaPath;
-import org.apache.drill.exec.physical.PhysicalOperatorSetupException;
 import org.apache.drill.exec.physical.base.AbstractGroupScan;
 import org.apache.drill.exec.physical.base.GroupScan;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
+import org.apache.drill.exec.physical.base.ScanStats;
 import org.apache.drill.exec.physical.base.SubScan;
+import org.apache.drill.exec.planner.logical.DrillScanRel;
 import org.apache.drill.exec.proto.CoordinationProtos;
+import org.apache.drill.exec.util.Utilities;
+import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class SplunkGroupScan extends AbstractGroupScan {
 
+  private final SplunkPluginConfig config;
   private final List<SchemaPath> columns;
   private final SplunkScanSpec splunkScanSpec;
   private final Map<String, String> filters;
-  //private final ScanStats scanStats;
+  private final ScanStats scanStats;
   private final double filterSelectivity;
 
+  private int hashCode;
 
   /**
    * Creates a new group scan from the storage plugin.
@@ -47,10 +54,11 @@ public class SplunkGroupScan extends AbstractGroupScan {
   public SplunkGroupScan (SplunkScanSpec scanSpec) {
     super("no-user");
     this.splunkScanSpec = scanSpec;
+    this.config = scanSpec.getConfig();
     this.columns = ALL_COLUMNS;
     this.filters = null;
     this.filterSelectivity = 0.0;
-    //this.scanStats = computeScanStats();
+    this.scanStats = computeScanStats();
   }
 
   /**
@@ -58,6 +66,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
    */
   public SplunkGroupScan(SplunkGroupScan that) {
     super(that);
+    this.config = that.config;
     this.splunkScanSpec = that.splunkScanSpec;
     this.columns = that.columns;
     this.filters = that.filters;
@@ -65,7 +74,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
 
     // Calcite makes many copies in the later stage of planning
     // without changing anything. Retain the previous stats.
-    //this.scanStats = that.scanStats;
+    this.scanStats = that.scanStats;
   }
 
   /**
@@ -76,12 +85,13 @@ public class SplunkGroupScan extends AbstractGroupScan {
     super(that);
     this.columns = columns;
     this.splunkScanSpec = that.splunkScanSpec;
+    this.config = that.config;
 
     // Oddly called later in planning, after earlier assigning columns,
     // to again assign columns. Retain filters, but compute new stats.
     this.filters = that.filters;
     this.filterSelectivity = that.filterSelectivity;
-   //this.scanStats = computeScanStats();
+   this.scanStats = computeScanStats();
   }
 
   /**
@@ -92,11 +102,12 @@ public class SplunkGroupScan extends AbstractGroupScan {
     super(that);
     this.columns = that.columns;
     this.splunkScanSpec = that.splunkScanSpec;
+    this.config = that.config;
 
     // Applies a filter.
     this.filters = filters;
     this.filterSelectivity = filterSelectivity;
-    //this.scanStats = computeScanStats();
+    this.scanStats = computeScanStats();
   }
 
   /**
@@ -105,47 +116,155 @@ public class SplunkGroupScan extends AbstractGroupScan {
    */
   @JsonCreator
   public SplunkGroupScan(
+    @JsonProperty("config") SplunkPluginConfig config,
     @JsonProperty("columns") List<SchemaPath> columns,
     @JsonProperty("splunkScanSpec") SplunkScanSpec splunkScanSpec,
     @JsonProperty("filters") Map<String, String> filters,
     @JsonProperty("filterSelectivity") double selectivity
   ) {
     super("no-user");
+    this.config = config;
     this.columns = columns;
     this.splunkScanSpec = splunkScanSpec;
     this.filters = filters;
     this.filterSelectivity = selectivity;
-    //this.scanStats = computeScanStats();
+    this.scanStats = computeScanStats();
   }
+
+  @JsonProperty("config")
+  public SplunkPluginConfig config() { return config; }
+
+  @JsonProperty("columns")
+  public List<SchemaPath> columns() { return columns; }
+
+  @JsonProperty("splunkScanSpec")
+  public SplunkScanSpec splunkScanSpec() { return splunkScanSpec; }
+
+  @JsonProperty("filters")
+  public Map<String, String> filters() { return filters; }
+
+  @JsonProperty("filterSelectivity")
+  public double selectivity() { return filterSelectivity; }
 
 
   @Override
-  public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) throws PhysicalOperatorSetupException {
-
-  }
+  public void applyAssignments(List<CoordinationProtos.DrillbitEndpoint> endpoints) { }
 
   @Override
-  public SubScan getSpecificScan(int minorFragmentId) throws ExecutionSetupException {
-    return null;
+  public SubScan getSpecificScan(int minorFragmentId) {
+    return new SplunkSubScan(config, splunkScanSpec, columns, filters);
   }
 
   @Override
   public int getMaxParallelizationWidth() {
-    return 0;
+    return 1;
+  }
+
+  @Override
+  public boolean canPushdownProjects(List<SchemaPath> columns) {
+    return true;
   }
 
   @Override
   public String getDigest() {
-    return null;
+    return toString();
   }
 
   @Override
-  public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) throws ExecutionSetupException {
-    return null;
+  public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
+    Preconditions.checkArgument(children.isEmpty());
+    return new SplunkGroupScan(this);
+  }
+
+  @Override
+  public ScanStats getScanStats() {
+
+    // Since this class is immutable, compute stats once and cache
+    // them. If the scan changes (adding columns, adding filters), we
+    // get a new scan without cached stats.
+    return scanStats;
+  }
+
+  private ScanStats computeScanStats() {
+
+    // If this config allows filters, then make the default
+    // cost very high to force the planner to choose the version
+    // with filters.
+    if (allowsFilters() && !hasFilters()) {
+      return new ScanStats(ScanStats.GroupScanProperty.ESTIMATED_TOTAL_COST,
+        1E9, 1E112, 1E12);
+    }
+
+    // No good estimates at all, just make up something.
+    double estRowCount = 10_000;
+
+    // NOTE this was important! if the predicates don't make the query more
+    // efficient they won't get pushed down
+    if (hasFilters()) {
+      estRowCount *= filterSelectivity;
+    }
+
+    double estColCount = Utilities.isStarQuery(columns) ? DrillScanRel.STAR_COLUMN_COST : columns.size();
+    double valueCount = estRowCount * estColCount;
+    double cpuCost = valueCount;
+    double ioCost = valueCount;
+
+    // Force the caller to use our costs rather than the
+    // defaults (which sets IO cost to zero).
+    return new ScanStats(ScanStats.GroupScanProperty.ESTIMATED_TOTAL_COST,
+      estRowCount, cpuCost, ioCost);
+  }
+
+  @JsonIgnore
+  public boolean hasFilters() {
+    return filters != null;
+  }
+
+  @JsonIgnore
+  public boolean allowsFilters() {
+    return true;
   }
 
   @Override
   public GroupScan clone(List<SchemaPath> columns) {
     return new SplunkGroupScan(this, columns);
+  }
+
+  @Override
+  public int hashCode() {
+
+    // Hash code is cached since Calcite calls this method many times.
+    if (hashCode == 0) {
+      // Don't include cost; it is derived.
+      hashCode = Objects.hash(config, splunkScanSpec, columns, filters);
+    }
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+
+    // Don't include cost; it is derived.
+    SplunkGroupScan other = (SplunkGroupScan) obj;
+    return Objects.equals(splunkScanSpec, other.splunkScanSpec())
+      && Objects.equals(config, other.columns())
+      && Objects.equals(columns, other.columns())
+      && Objects.equals(filters, other.filters());
+  }
+
+  @Override
+  public String toString() {
+    return new PlanStringBuilder(this)
+      .field("config", config)
+      .field("scan spec", splunkScanSpec)
+      .field("columns", columns)
+      .field("filters", filters)
+      .toString();
   }
 }

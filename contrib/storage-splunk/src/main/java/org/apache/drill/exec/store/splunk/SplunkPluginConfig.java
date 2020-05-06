@@ -23,8 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.apache.drill.common.PlanStringBuilder;
 import org.apache.drill.common.logical.StoragePluginConfigBase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -33,13 +31,11 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
 
   public static final String NAME = "splunk";
 
-  private static final Logger logger = LoggerFactory.getLogger(SplunkPluginConfig.class);
-
   private final String username;
-
   private final String password;
-
   private final String hostname;
+  private final String earliestTime;
+  private final String latestTime;
 
   private final int port;
 
@@ -47,11 +43,15 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
   public SplunkPluginConfig(@JsonProperty("username") String username,
                             @JsonProperty("password") String password,
                             @JsonProperty("hostname") String hostname,
-                            @JsonProperty("port") int port) {
+                            @JsonProperty("port") int port,
+                            @JsonProperty("earliestTime") String earliestTime,
+                            @JsonProperty("latestTime") String latestTime) {
     this.username = username;
     this.password = password;
     this.hostname = hostname;
     this.port = port;
+    this.earliestTime = earliestTime;
+    this.latestTime = latestTime == null ? "now" : latestTime;;
   }
 
   @JsonProperty("username")
@@ -74,6 +74,16 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
     return port;
   }
 
+  @JsonProperty("earliestTime")
+  public String getEarliestTime() {
+    return earliestTime;
+  }
+
+  @JsonProperty("latestTime")
+  public String getLatestTime() {
+    return latestTime;
+  }
+
 
   @Override
   public boolean equals(Object that) {
@@ -86,12 +96,14 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
     return Objects.equals(username, thatConfig.username) &&
       Objects.equals(password, thatConfig.password) &&
       Objects.equals(hostname, thatConfig.hostname) &&
-      Objects.equals(port, thatConfig.port);
+      Objects.equals(port, thatConfig.port) &&
+      Objects.equals(earliestTime, thatConfig.earliestTime) &&
+      Objects.equals(latestTime, thatConfig.latestTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(username, password, hostname, port);
+    return Objects.hash(username, password, hostname, port, earliestTime, latestTime);
   }
 
   @Override
@@ -101,6 +113,8 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
       .field("password", password)
       .field("hostname", hostname)
       .field("port", port)
+      .field("earliestTime", earliestTime)
+      .field("latestTime", latestTime)
       .toString();
   }
 }

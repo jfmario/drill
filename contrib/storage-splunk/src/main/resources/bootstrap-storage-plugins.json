@@ -2,8 +2,8 @@
   "storage":{
     "splunk" : {
       "type":"splunk",
-      "username": "",
-      "password": "",
+      "username": "admin",
+      "password": "changeme",
       "hostname": "localhost",
       "port": 8089,
       "enabled": false
