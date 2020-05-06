@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-@JsonTypeName(SplunkFormatConfig.NAME)
-public class SplunkFormatConfig extends StoragePluginConfigBase {
+@JsonTypeName(SplunkPluginConfig.NAME)
+public class SplunkPluginConfig extends StoragePluginConfigBase {
 
   public static final String NAME = "splunk";
 
-  private static final Logger logger = LoggerFactory.getLogger(SplunkFormatConfig.class);
+  private static final Logger logger = LoggerFactory.getLogger(SplunkPluginConfig.class);
 
   private final String username;
 
@@ -44,7 +44,7 @@ public class SplunkFormatConfig extends StoragePluginConfigBase {
   private final int port;
 
   @JsonCreator
-  public SplunkFormatConfig(@JsonProperty("username") String username,
+  public SplunkPluginConfig(@JsonProperty("username") String username,
                             @JsonProperty("password") String password,
                             @JsonProperty("hostname") String hostname,
                             @JsonProperty("port") int port) {
@@ -82,7 +82,7 @@ public class SplunkFormatConfig extends StoragePluginConfigBase {
     } else if (that == null || getClass() != that.getClass()) {
       return false;
     }
-    SplunkFormatConfig thatConfig = (SplunkFormatConfig) that;
+    SplunkPluginConfig thatConfig = (SplunkPluginConfig) that;
     return Objects.equals(username, thatConfig.username) &&
       Objects.equals(password, thatConfig.password) &&
       Objects.equals(hostname, thatConfig.hostname) &&

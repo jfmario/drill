@@ -15,29 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.drill.exec.store.splunk;
 
-import org.apache.drill.exec.store.StoragePluginRegistry;
-import org.apache.drill.test.ClusterFixture;
-import org.apache.drill.test.ClusterTest;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
-public class TestSplunkPlugin extends ClusterTest {
+@JsonTypeName("splunk-scan-spec")
+public class SplunkScanSpec {
+  private final String pluginName;
+  private final String indexName;
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    startCluster(ClusterFixture.builder(dirTestWatcher));
-
-    StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
-    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089);
-    config.setEnabled(true);
-    pluginRegistry.put(SplunkPluginConfig.NAME, config);
+  @JsonCreator
+  public SplunkScanSpec(@JsonProperty("pluginName") String pluginName,
+                        @JsonProperty("indexName") String indexName) {
+    this.pluginName = pluginName;
+    this.indexName = indexName;
   }
 
-  @Test
-  public void test() throws Exception {
-    String sql = "SELECT * FROM splunk.main";
-    queryBuilder().sql(sql).run();
-  }
+  @JsonProperty("pluginName")
+  public String getPluginName() { return pluginName; }
+
+  @JsonProperty("indexName")
+  public String getIndexName() { return indexName; }
+
 }

@@ -18,27 +18,29 @@
 
 package org.apache.drill.exec.store.splunk;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.drill.common.logical.StoragePluginConfig;
+import org.apache.drill.common.JSONOptions;
+import org.apache.drill.exec.physical.base.AbstractGroupScan;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.store.AbstractStoragePlugin;
 import org.apache.drill.exec.store.SchemaConfig;
 
 import java.io.IOException;
 
-public class SplunkFormatPlugin extends AbstractStoragePlugin {
+public class SplunkStoragePlugin extends AbstractStoragePlugin {
 
-  private final SplunkFormatConfig config;
+  private final SplunkPluginConfig config;
   private final SplunkSchemaFactory schemaFactory;
 
-  public SplunkFormatPlugin(SplunkFormatConfig configuration, DrillbitContext context, String name) {
+  public SplunkStoragePlugin(SplunkPluginConfig configuration, DrillbitContext context, String name) {
     super(context, name);
     this.config = configuration;
     this.schemaFactory = new SplunkSchemaFactory(this);
   }
 
   @Override
-  public StoragePluginConfig getConfig() {
+  public SplunkPluginConfig getConfig() {
     return config;
   }
 
@@ -50,5 +52,11 @@ public class SplunkFormatPlugin extends AbstractStoragePlugin {
   @Override
   public void registerSchemas(SchemaConfig schemaConfig, SchemaPlus parent) throws IOException {
     schemaFactory.registerSchemas(schemaConfig, parent);
+  }
+
+  @Override
+  public AbstractGroupScan getPhysicalScan(String userName, JSONOptions selection) throws IOException {
+    SplunkScanSpec scanSpec = selection.getListWith(context.getLpPersistence().getMapper(), new TypeReference<SplunkScanSpec>() {});
+    return new SplunkGroupScan(scanSpec);
   }
 }

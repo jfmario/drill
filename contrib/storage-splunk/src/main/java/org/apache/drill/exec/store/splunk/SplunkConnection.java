@@ -28,6 +28,9 @@ import org.apache.drill.common.exceptions.UserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class wraps the functionality of the Splunk connection for Drill.
+ */
 public class SplunkConnection {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkConnection.class);
@@ -38,7 +41,7 @@ public class SplunkConnection {
   private final int port;
   private Service service;
 
-  public SplunkConnection(SplunkFormatConfig config) {
+  public SplunkConnection(SplunkPluginConfig config) {
     this.username = config.getUsername();
     this.password = config.getPassword();
     this.hostname = config.getHostname();
@@ -46,7 +49,10 @@ public class SplunkConnection {
     service = connect();
   }
 
-
+  /**
+   * Connects to Splunk instance
+   * @return an active Splunk connection.
+   */
   public Service connect() {
     HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
     ServiceArgs loginArgs = new ServiceArgs();
@@ -64,13 +70,20 @@ public class SplunkConnection {
         .addContext(e.getMessage())
         .build(logger);
     }
-
+    logger.debug("Successfully connected to {} on port {}", hostname, port);
     return service;
   }
 
+  /**
+   * Gets the available indexes from Splunk. Drill treats these as a table.
+   * @return A collection of Splunk indexes
+   */
   public EntityCollection<Index> getIndexes() {
     return service.getIndexes();
   }
 
+  public Service getService() {
+    return service;
+  }
 
 }

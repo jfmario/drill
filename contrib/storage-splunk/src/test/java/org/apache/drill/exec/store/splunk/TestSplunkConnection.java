@@ -5,21 +5,20 @@ import com.splunk.Index;
 import org.apache.drill.common.exceptions.UserException;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class TestSplunkConnection {
 
   @Test
   public void testConnection() throws Exception {
-    SplunkConnection sc = new SplunkConnection(new SplunkFormatConfig("admin", "password", "localhost", 8089));
+    SplunkConnection sc = new SplunkConnection(new SplunkPluginConfig("admin", "password", "localhost", 8089));
     sc.connect();
   }
 
   @Test
   public void testConnectionFail() throws Exception {
     try {
-      SplunkConnection sc = new SplunkConnection(new SplunkFormatConfig("hacker", "hacker", "localhost", 8089));
+      SplunkConnection sc = new SplunkConnection(new SplunkPluginConfig("hacker", "hacker", "localhost", 8089));
       sc.connect();
       fail();
     } catch (UserException e) {
@@ -29,7 +28,7 @@ public class TestSplunkConnection {
 
   @Test
   public void testGetIndexes() throws Exception {
-    SplunkConnection sc = new SplunkConnection(new SplunkFormatConfig("admin", "password", "localhost", 8089));
+    SplunkConnection sc = new SplunkConnection(new SplunkPluginConfig("admin", "password", "localhost", 8089));
     EntityCollection<Index> indexes = sc.getIndexes();
     for (Index index : indexes.values()) {
       System.out.println(index.getName());
