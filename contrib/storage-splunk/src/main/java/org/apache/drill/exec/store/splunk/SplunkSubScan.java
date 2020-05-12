@@ -42,18 +42,21 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
   private final SplunkScanSpec splunkScanSpec;
   private final List<SchemaPath> columns;
   private final Map<String, String> filters;
+  private final int maxRecords;
 
   @JsonCreator
   public SplunkSubScan(
     @JsonProperty("config") SplunkPluginConfig config,
     @JsonProperty("tableSpec") SplunkScanSpec splunkScanSpec,
     @JsonProperty("columns") List<SchemaPath> columns,
-    @JsonProperty("filters") Map<String, String> filters) {
+    @JsonProperty("filters") Map<String, String> filters,
+    @JsonProperty("maxRecords") int maxRecords) {
       super("user");
       this.config = config;
       this.splunkScanSpec = splunkScanSpec;
       this.columns = columns;
       this.filters = filters;
+      this.maxRecords = maxRecords;
   }
 
   @JsonProperty("config")
@@ -76,6 +79,11 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
     return filters;
   }
 
+  @JsonProperty("maxRecords")
+  public int getMaxRecords() {
+    return maxRecords;
+  }
+
   @Override
   public <T, X, E extends Throwable> T accept(
     PhysicalVisitor<T, X, E> physicalVisitor, X value) throws E {
@@ -84,7 +92,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
 
   @Override
   public PhysicalOperator getNewWithChildren(List<PhysicalOperator> children) {
-    return new SplunkSubScan(config, splunkScanSpec, columns, filters);
+    return new SplunkSubScan(config, splunkScanSpec, columns, filters, maxRecords);
   }
 
   @Override
@@ -106,12 +114,13 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
       .field("tableSpec", splunkScanSpec)
       .field("columns", columns)
       .field("filters", filters)
+      .field("maxRecords", maxRecords)
       .toString();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(config, splunkScanSpec, columns, filters);
+    return Objects.hash(config, splunkScanSpec, columns, filters, maxRecords);
   }
 
   @Override
@@ -126,6 +135,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
     return Objects.equals(splunkScanSpec, other.splunkScanSpec)
       && Objects.equals(config, other.config)
       && Objects.equals(columns, other.columns)
-      && Objects.equals(filters, other.filters);
+      && Objects.equals(filters, other.filters)
+      && Objects.equals(maxRecords, other.maxRecords);
   }
 }

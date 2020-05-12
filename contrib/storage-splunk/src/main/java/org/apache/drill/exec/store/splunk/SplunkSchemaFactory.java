@@ -20,13 +20,9 @@ import java.util.Set;
 public class SplunkSchemaFactory extends AbstractSchemaFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkSchemaFactory.class);
-
   private final SplunkStoragePlugin plugin;
-
   private final Map<String, DynamicDrillTable> activeTables = new HashMap<>();
-
   private final SplunkConnection connection;
-
   private EntityCollection<Index> indexes;
 
   public SplunkSchemaFactory(SplunkStoragePlugin plugin) {
@@ -41,7 +37,6 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
 
     // Get Splunk Indexes
     indexes = connection.getIndexes();
-
 
     for (Index index : indexes.values()) {
       SplunkSchema schema = new SplunkSchema(plugin);

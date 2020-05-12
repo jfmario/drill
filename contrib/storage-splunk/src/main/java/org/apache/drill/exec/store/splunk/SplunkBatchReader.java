@@ -18,8 +18,6 @@
 
 package org.apache.drill.exec.store.splunk;
 
-import com.splunk.Job;
-import com.splunk.JobCollection;
 import com.splunk.JobExportArgs;
 import com.splunk.Service;
 import org.apache.drill.common.AutoCloseables;
@@ -27,8 +25,6 @@ import org.apache.drill.common.exceptions.CustomErrorContext;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.impl.scan.framework.SchemaNegotiator;
-import org.apache.drill.exec.physical.resultSet.RowSetLoader;
-import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.store.easy.json.loader.JsonLoader;
 import org.apache.drill.exec.store.easy.json.loader.JsonLoaderImpl;
 import org.apache.drill.exec.util.Utilities;
@@ -36,8 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
@@ -45,12 +41,11 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private final SplunkPluginConfig config;
   private final SplunkSubScan subScan;
   private final List<SchemaPath> projectedColumns;
+  private final Service splunkService;
   private SplunkScanSpec subScanSpec;
-  private RowSetLoader rowWriter;
   private JobExportArgs exportArgs;
   private JsonLoader jsonLoader;
-  private final SplunkConnection connection;
-  private final Service splunkService;
+
 
 
   public SplunkBatchReader(SplunkPluginConfig config, SplunkSubScan subScan) {
@@ -58,7 +53,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     this.subScan = subScan;
     this.projectedColumns = subScan.getColumns();
     this.subScanSpec = subScan.getScanSpec();
-    this.connection = new SplunkConnection(config);
+    SplunkConnection connection = new SplunkConnection(config);
     this.splunkService = connection.connect();
   }
 
@@ -67,13 +62,19 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     CustomErrorContext parentErrorContext = negotiator.parentErrorContext();
 
     // Build the Schema
-    SchemaBuilder builder = new SchemaBuilder();
     String queryString = buildQueryString();
 
-    JobCollection jobs = splunkService.getJobs();
-    Job job = jobs.create(queryString);
-
     InputStream searchResults = splunkService.export(queryString, exportArgs);
+
+    /*StringWriter writer = new StringWriter();
+    try {
+      IOUtils.copy(searchResults, writer, "UTF-8");
+      String results = writer.toString();
+      logger.debug(results);
+    } catch (Exception e) {
+
+    }*/
+
 
     try {
       jsonLoader = new JsonLoaderImpl.JsonLoaderBuilder()
@@ -106,6 +107,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private String buildQueryString () {
     String query = "search ";
 
+    SplunkQueryBuilder builder = new SplunkQueryBuilder(subScanSpec.getIndexName());
+
     // Get the index from the table
     exportArgs = new JobExportArgs();
 
@@ -122,24 +125,35 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     exportArgs.setEarliestTime("-7d");
     exportArgs.setLatestTime(config.getLatestTime());
 
-    // Add index to query string
-    String index = subScanSpec.getIndexName();
-    query = query + "index=" + index;
-
     // Pushdown the selected fields for non star queries.
     if (! Utilities.isStarQuery(projectedColumns)) {
-      List<String> fieldNames = new ArrayList<>();
-
-      // Add field names to array of fields.
-      for (SchemaPath field: projectedColumns) {
-        fieldNames.add(field.rootName());
-      }
-      // Add fields to export args
-      exportArgs.setFieldList(fieldNames.toArray(new String[fieldNames.size()]));
+      builder.addField(projectedColumns);
     }
 
-    // For now..
-    query += " sourcetype=\"access_combined_wcookie\" | table *";
+    // Add sourcetype if present
+    // TODO For testing only
+    builder.addSourceType("access_combined_wcookie");
+
+    // Apply filters
+    Map<String, String> filters = subScan.getFilters();
+    StringBuilder andFilterString = new StringBuilder();
+
+    // Since Splunk treats filters as AND filters by default, they can simply be added to the search string
+    if (filters != null) {
+      for (Map.Entry filter : filters.entrySet()) {
+        andFilterString
+          .append(filter.getKey())
+          .append("=")
+          .append(filter.getValue())
+          .append(" ");
+      }
+    }
+
+    // Apply limits
+    if (subScan.getMaxRecords() > 0) {
+      builder.addLimit(subScan.getMaxRecords());
+    }
+    query = builder.build();
 
     logger.debug("Sending query to Splunk: {}", query);
     return query;

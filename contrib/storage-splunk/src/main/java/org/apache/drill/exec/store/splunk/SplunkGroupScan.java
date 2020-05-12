@@ -45,6 +45,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
   private final Map<String, String> filters;
   private final ScanStats scanStats;
   private final double filterSelectivity;
+  private int maxRecords;
 
   private int hashCode;
 
@@ -59,6 +60,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.filters = null;
     this.filterSelectivity = 0.0;
     this.scanStats = computeScanStats();
+    this.maxRecords = -1;
   }
 
   /**
@@ -71,6 +73,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.columns = that.columns;
     this.filters = that.filters;
     this.filterSelectivity = that.filterSelectivity;
+    this.maxRecords = that.maxRecords;
 
     // Calcite makes many copies in the later stage of planning
     // without changing anything. Retain the previous stats.
@@ -91,7 +94,8 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // to again assign columns. Retain filters, but compute new stats.
     this.filters = that.filters;
     this.filterSelectivity = that.filterSelectivity;
-   this.scanStats = computeScanStats();
+    this.scanStats = computeScanStats();
+    this.maxRecords = that.maxRecords;
   }
 
   /**
@@ -108,6 +112,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.filters = filters;
     this.filterSelectivity = filterSelectivity;
     this.scanStats = computeScanStats();
+    this.maxRecords = that.maxRecords;
   }
 
   /**
@@ -120,7 +125,8 @@ public class SplunkGroupScan extends AbstractGroupScan {
     @JsonProperty("columns") List<SchemaPath> columns,
     @JsonProperty("splunkScanSpec") SplunkScanSpec splunkScanSpec,
     @JsonProperty("filters") Map<String, String> filters,
-    @JsonProperty("filterSelectivity") double selectivity
+    @JsonProperty("filterSelectivity") double selectivity,
+    @JsonProperty("maxRecords") int maxRecords
   ) {
     super("no-user");
     this.config = config;
@@ -129,6 +135,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.filters = filters;
     this.filterSelectivity = selectivity;
     this.scanStats = computeScanStats();
+    this.maxRecords = maxRecords;
   }
 
   @JsonProperty("config")
@@ -143,6 +150,9 @@ public class SplunkGroupScan extends AbstractGroupScan {
   @JsonProperty("filters")
   public Map<String, String> filters() { return filters; }
 
+  @JsonProperty("maxRecords")
+  public int maxRecords() { return maxRecords; }
+
   @JsonProperty("filterSelectivity")
   public double selectivity() { return filterSelectivity; }
 
@@ -152,7 +162,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
 
   @Override
   public SubScan getSpecificScan(int minorFragmentId) {
-    return new SplunkSubScan(config, splunkScanSpec, columns, filters);
+    return new SplunkSubScan(config, splunkScanSpec, columns, filters, maxRecords);
   }
 
   @Override
@@ -163,6 +173,19 @@ public class SplunkGroupScan extends AbstractGroupScan {
   @Override
   public boolean canPushdownProjects(List<SchemaPath> columns) {
     return true;
+  }
+
+  @Override
+  public boolean supportsLimitPushdown() {
+    return true;
+  }
+
+  @Override
+  public GroupScan applyLimit(int maxRecords) {
+    this.maxRecords = maxRecords;
+    // Uncertain as to why, but returning a new GroupScan object or this with the
+    // maxLimit set causes infinite looping. Setting the maxRecords and returning null solves that.
+    return null;
   }
 
   @Override
@@ -253,9 +276,10 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // Don't include cost; it is derived.
     SplunkGroupScan other = (SplunkGroupScan) obj;
     return Objects.equals(splunkScanSpec, other.splunkScanSpec())
-      && Objects.equals(config, other.columns())
+      && Objects.equals(config, other.config())
       && Objects.equals(columns, other.columns())
-      && Objects.equals(filters, other.filters());
+      && Objects.equals(filters, other.filters())
+      && Objects.equals(maxRecords, other.maxRecords());
   }
 
   @Override
@@ -265,6 +289,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
       .field("scan spec", splunkScanSpec)
       .field("columns", columns)
       .field("filters", filters)
+      .field("maxRecords", maxRecords)
       .toString();
   }
 }

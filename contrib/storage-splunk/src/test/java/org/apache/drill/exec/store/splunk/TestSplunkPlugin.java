@@ -39,7 +39,7 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testStarQuery() throws Exception {
-    String sql = "SELECT * FROM splunk.main LIMIT 10";
+    String sql = "SELECT * FROM splunk.main";
     QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
     while (results.hasNext()) {
       DirectRowSet result = results.next();
@@ -49,7 +49,27 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
-    String sql = "SELECT clientip, file, host FROM splunk.main LIMIT 10";
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main";
+    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
+    while (results.hasNext()) {
+      DirectRowSet result = results.next();
+      result.print();
+    }
+  }
+
+  @Test
+  public void testExplictFieldsWithLimitQuery() throws Exception {
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 10";
+    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
+    while (results.hasNext()) {
+      DirectRowSet result = results.next();
+      result.print();
+    }
+  }
+
+  @Test
+  public void testEqualityFilterQuery() throws Exception {
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE file='cart.do'";
     QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
     while (results.hasNext()) {
       DirectRowSet result = results.next();
