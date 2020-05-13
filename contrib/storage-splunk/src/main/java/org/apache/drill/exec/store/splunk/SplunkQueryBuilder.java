@@ -28,6 +28,7 @@ public class SplunkQueryBuilder {
   private String query;
   private String fields;
   private String sourceTypes;
+  private String fieldList;
   private int limit;
 
   public SplunkQueryBuilder (String index) {
@@ -58,10 +59,10 @@ public class SplunkQueryBuilder {
     }
 
     // Case for first field
-    if (fields == null) {
-      this.fields = " | fields " + field;
+    if (fieldList == null) {
+      this.fieldList = field;
     } else {
-      this.fields += "," + field;
+      this.fieldList += "," + field;
     }
     return this;
   }
@@ -98,12 +99,15 @@ public class SplunkQueryBuilder {
     }
 
     // Add fields
-    if (fields != null) {
-      query += fields;
+    if (! Strings.isNullOrEmpty(fieldList)) {
+      query += " | fields " + fieldList;
     }
 
     // Add table logic. This tells Splunk to return the data in tabular form rather than the mess that it usually generates
-    query += " | table *";
+    if ( Strings.isNullOrEmpty(fieldList)) {
+      fieldList = "*";
+    }
+    query += " | table " + fieldList;
 
     // Add limit
     if (this.limit > 0) {

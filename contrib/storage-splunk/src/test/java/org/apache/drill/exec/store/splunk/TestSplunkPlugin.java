@@ -18,6 +18,7 @@
 package org.apache.drill.exec.store.splunk;
 
 import org.apache.drill.exec.physical.rowSet.DirectRowSet;
+import org.apache.drill.exec.physical.rowSet.RowSet;
 import org.apache.drill.exec.store.StoragePluginRegistry;
 import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
@@ -39,7 +40,7 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testStarQuery() throws Exception {
-    String sql = "SELECT * FROM splunk.main";
+    String sql = "SELECT * FROM splunk.main LIMIT 5";
     QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
     while (results.hasNext()) {
       DirectRowSet result = results.next();
@@ -65,6 +66,17 @@ public class TestSplunkPlugin extends ClusterTest {
       DirectRowSet result = results.next();
       result.print();
     }
+  }
+
+  @Test
+  public void testExplictFieldsWithOneFieldLimitQuery() throws Exception {
+    String sql = "SELECT clientip FROM splunk.main LIMIT 2";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+    /*while (results.hasNext()) {
+      DirectRowSet result = results.next();
+      result.print();
+    }*/
   }
 
   @Test

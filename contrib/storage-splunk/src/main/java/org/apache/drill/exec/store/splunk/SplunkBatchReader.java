@@ -42,7 +42,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private final SplunkSubScan subScan;
   private final List<SchemaPath> projectedColumns;
   private final Service splunkService;
-  private SplunkScanSpec subScanSpec;
+  private final SplunkScanSpec subScanSpec;
   private JobExportArgs exportArgs;
   private JsonLoader jsonLoader;
 
@@ -66,6 +66,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     InputStream searchResults = splunkService.export(queryString, exportArgs);
 
+
     /*StringWriter writer = new StringWriter();
     try {
       IOUtils.copy(searchResults, writer, "UTF-8");
@@ -80,7 +81,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       jsonLoader = new JsonLoaderImpl.JsonLoaderBuilder()
         .resultSetLoader(negotiator.build())
         .standardOptions(negotiator.queryOptions())
-        .dataPath("result")
+        //.dataPath("result")
         .errorContext(parentErrorContext)
         .fromStream(searchResults)
         .build();
@@ -122,7 +123,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
-    exportArgs.setEarliestTime("-7d");
+    exportArgs.setEarliestTime("-14d");
     exportArgs.setLatestTime(config.getLatestTime());
 
     // Pushdown the selected fields for non star queries.
