@@ -20,32 +20,54 @@ package org.apache.drill.exec.store.splunk;
 
 import com.splunk.JobExportArgs;
 import com.splunk.Service;
-import org.apache.drill.common.AutoCloseables;
+import io.prestosql.jdbc.$internal.guava.base.Strings;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.drill.common.exceptions.CustomErrorContext;
+import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
+import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.impl.scan.framework.SchemaNegotiator;
-import org.apache.drill.exec.store.easy.json.loader.JsonLoader;
-import org.apache.drill.exec.store.easy.json.loader.JsonLoaderImpl;
+import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
+import org.apache.drill.exec.physical.resultSet.RowSetLoader;
+import org.apache.drill.exec.record.metadata.SchemaBuilder;
+import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.util.Utilities;
+import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkBatchReader.class);
+  private static final List<String> INT_COLS = new ArrayList<String>(Arrays.asList(new String[]{"date_hour", "date_mday", "date_minute", "date_second", "date_year"}));
+  private static final List<String> TS_COLS = new ArrayList<String>(Arrays.asList(new String[]{"_indextime", "_time"}));
+
   private final SplunkPluginConfig config;
   private final SplunkSubScan subScan;
   private final List<SchemaPath> projectedColumns;
   private final Service splunkService;
   private final SplunkScanSpec subScanSpec;
   private JobExportArgs exportArgs;
-  private JsonLoader jsonLoader;
-
+  private Iterator<CSVRecord> csvIterator;
+  private CustomErrorContext errorContext;
+  private List<String> columnNames;
+  private List<SplunkColumnWriter> columnWriters;
+  private CSVRecord firstRow;
+  private SchemaBuilder builder;
+  private RowSetLoader rowWriter;
 
 
   public SplunkBatchReader(SplunkPluginConfig config, SplunkSubScan subScan) {
@@ -59,50 +81,112 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   @Override
   public boolean open(SchemaNegotiator negotiator) {
-    CustomErrorContext parentErrorContext = negotiator.parentErrorContext();
+    this.errorContext = negotiator.parentErrorContext();
 
-    // Build the Schema
     String queryString = buildQueryString();
 
+    // Execute the query
     InputStream searchResults = splunkService.export(queryString, exportArgs);
 
-
-    /*StringWriter writer = new StringWriter();
+     //Splunk produces poor output from the API.  Of the available choices, CSV was the easiest to deal with.
     try {
-      IOUtils.copy(searchResults, writer, "UTF-8");
-      String results = writer.toString();
-      logger.debug(results);
-    } catch (Exception e) {
-
-    }*/
-
-
-    try {
-      jsonLoader = new JsonLoaderImpl.JsonLoaderBuilder()
-        .resultSetLoader(negotiator.build())
-        .standardOptions(negotiator.queryOptions())
-        //.dataPath("result")
-        .errorContext(parentErrorContext)
-        .fromStream(searchResults)
-        .build();
-    } catch (Throwable t) {
-      AutoCloseables.closeSilently(searchResults);
-      throw t;
+      BufferedReader br = new BufferedReader(new InputStreamReader(searchResults, StandardCharsets.UTF_8));
+      this.csvIterator = CSVFormat.DEFAULT.parse(br).iterator();
+    } catch (IOException e) {
+      throw UserException
+        .dataReadError(e)
+        .message("Error reading data from Splunk")
+        .addContext(errorContext)
+        .build(logger);
     }
+
+    // Build the Schema
+    builder = new SchemaBuilder();
+    TupleMetadata drillSchema = buildSchema();
+    negotiator.tableSchema(drillSchema, true);
+    ResultSetLoader resultLoader = negotiator.build();
+
+    // Create ScalarWriters
+    rowWriter = resultLoader.writer();
+    populateWriterArray();
+
     return true;
   }
 
   @Override
   public boolean next() {
-    return jsonLoader.readBatch();
+    while (!rowWriter.isFull()) {
+      if (!processRow()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
   public void close() {
-    if (jsonLoader != null) {
-      jsonLoader.close();
-      jsonLoader = null;
+
+  }
+
+  /**
+   * Splunk returns the data in CSV format with some fields escaped and some not.  Splunk does
+   * not have the concept of datatypes, or at least does not make the metadata available in the API, so
+   * the best solution is to provide a list of columns that are known to be a specific data type such as _time,
+   * indextime, the various date components etc and map those as the appropriate columns.  Then map everything else as a string.
+   */
+  private TupleMetadata buildSchema() {
+    // Initialize the columnName arrayList
+    columnNames = new ArrayList<>();
+
+    // Get the first row
+    firstRow = csvIterator.next();
+    for (String value : firstRow) {
+      columnNames.add(value);
+      if (INT_COLS.contains(value)) {
+        builder.addNullable(value, MinorType.INT);
+      } else if (TS_COLS.contains(value)) {
+        builder.addNullable(value, MinorType.TIMESTAMP);
+      } else {
+        builder.addNullable(value, MinorType.VARCHAR);
+      }
     }
+
+    return builder.buildSchema();
+  }
+
+  private void populateWriterArray() {
+    columnWriters = new ArrayList<>();
+
+    // Case for empty result set
+    if (firstRow == null || firstRow.size() == 0) {
+      return;
+    }
+
+    int colPosition = 0;
+    for (String value : firstRow) {
+      if (INT_COLS.contains(value)) {
+        columnWriters.add(new IntColumnWriter(value, rowWriter, colPosition));
+      } else if (TS_COLS.contains(value)) {
+        columnWriters.add(new TimestampColumnWriter(value, rowWriter, colPosition));
+      } else {
+        columnWriters.add(new StringColumnWriter(value, rowWriter, colPosition));
+      }
+      colPosition++;
+    }
+  }
+
+  private boolean processRow() {
+    if (! csvIterator.hasNext()) {
+      return false;
+    }
+    CSVRecord record = csvIterator.next();
+
+    rowWriter.start();
+    for (int i = 0; i < columnWriters.size(); i++) {
+      columnWriters.get(i).load(record);
+    }
+    rowWriter.save();
+    return true;
   }
 
   private String buildQueryString () {
@@ -116,8 +200,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Set to normal search mode
     exportArgs.setSearchMode(JobExportArgs.SearchMode.NORMAL);
 
-    // Set output mode to JSON
-    exportArgs.setOutputMode(JobExportArgs.OutputMode.JSON);
+    // Set output mode to CSV
+    exportArgs.setOutputMode(JobExportArgs.OutputMode.CSV);
     exportArgs.setEnableLookups(true);
 
 
@@ -158,6 +242,64 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     logger.debug("Sending query to Splunk: {}", query);
     return query;
+  }
+
+  public abstract static class SplunkColumnWriter {
+
+    final String colName;
+
+    ScalarWriter columnWriter;
+
+    int columnIndex;  // TODO Add column index
+
+    public SplunkColumnWriter(String colName, ScalarWriter writer, int columnIndex) {
+      this.colName = colName;
+      this.columnWriter = writer;
+      this.columnIndex = columnIndex;
+    }
+
+    public void load(CSVRecord record) {}
+  }
+
+  public static class StringColumnWriter extends SplunkColumnWriter {
+
+    StringColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
+      super(colName, rowWriter.scalar(colName), columnIndex);
+    }
+
+    @Override
+    public void load(CSVRecord record) {
+      String value = record.get(columnIndex);
+      if (Strings.isNullOrEmpty(value)) {
+        columnWriter.setNull();
+      } else {
+        columnWriter.setString(value);
+      }
+    }
+  }
+
+  public static class IntColumnWriter extends SplunkColumnWriter {
+
+    IntColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
+      super(colName, rowWriter.scalar(colName), columnIndex);
+    }
+
+    @Override
+    public void load(CSVRecord record) {
+      int value = Integer.parseInt(record.get(columnIndex));
+      columnWriter.setInt(value);
+    }
+  }
+
+  public static class TimestampColumnWriter extends SplunkColumnWriter {
+
+    TimestampColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
+      super(colName, rowWriter.scalar(colName), columnIndex);
+    }
+
+    @Override
+    public void load(CSVRecord record) {
+    }
   }
 }
 

@@ -50,7 +50,7 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main";
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 5";
     QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
     while (results.hasNext()) {
       DirectRowSet result = results.next();

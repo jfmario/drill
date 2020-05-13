@@ -41,14 +41,14 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <version>${okhttp.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.splunk</groupId>
       <artifactId>splunk</artifactId>
       <version>1.6.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>1.8</version>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
@@ -64,13 +64,6 @@
       <artifactId>drill-common</artifactId>
       <classifier>tests</classifier>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>mockwebserver</artifactId>
-      <version>${okhttp.version}</version>
       <scope>test</scope>
     </dependency>
 
