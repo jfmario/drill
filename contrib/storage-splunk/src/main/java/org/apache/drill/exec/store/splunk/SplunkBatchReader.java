@@ -20,7 +20,6 @@ package org.apache.drill.exec.store.splunk;
 
 import com.splunk.JobExportArgs;
 import com.splunk.Service;
-import io.prestosql.jdbc.$internal.guava.base.Strings;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.drill.common.exceptions.CustomErrorContext;
@@ -35,6 +34,8 @@ import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.exec.vector.accessor.ScalarWriter;
+import org.apache.drill.shaded.guava.com.google.common.base.Strings;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ import java.util.Map;
 public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkBatchReader.class);
-  private static final List<String> INT_COLS = new ArrayList<String>(Arrays.asList(new String[]{"date_hour", "date_mday", "date_minute", "date_second", "date_year"}));
+  private static final List<String> INT_COLS = new ArrayList<String>(Arrays.asList(new String[]{"date_hour", "date_mday", "date_minute", "date_second", "date_year", "linecount"}));
   private static final List<String> TS_COLS = new ArrayList<String>(Arrays.asList(new String[]{"_indextime", "_time"}));
 
   private final SplunkPluginConfig config;
@@ -88,7 +89,10 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Execute the query
     InputStream searchResults = splunkService.export(queryString, exportArgs);
 
-     //Splunk produces poor output from the API.  Of the available choices, CSV was the easiest to deal with.
+    /*
+    Splunk produces poor output from the API.  Of the available choices, CSV was the easiest to deal with.  Unfortunately,
+    the data is not consistent, as some fields are quoted, some are not.
+    */
     try {
       BufferedReader br = new BufferedReader(new InputStreamReader(searchResults, StandardCharsets.UTF_8));
       this.csvIterator = CSVFormat.DEFAULT.parse(br).iterator();
@@ -182,8 +186,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     CSVRecord record = csvIterator.next();
 
     rowWriter.start();
-    for (int i = 0; i < columnWriters.size(); i++) {
-      columnWriters.get(i).load(record);
+    for (SplunkColumnWriter columnWriter : columnWriters) {
+      columnWriter.load(record);
     }
     rowWriter.save();
     return true;
@@ -199,6 +203,9 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Set to normal search mode
     exportArgs.setSearchMode(JobExportArgs.SearchMode.NORMAL);
+
+    // Set all time stamps to epoch seconds
+    exportArgs.setTimeFormat("%s");
 
     // Set output mode to CSV
     exportArgs.setOutputMode(JobExportArgs.OutputMode.CSV);
@@ -247,10 +254,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   public abstract static class SplunkColumnWriter {
 
     final String colName;
-
     ScalarWriter columnWriter;
-
-    int columnIndex;  // TODO Add column index
+    int columnIndex;
 
     public SplunkColumnWriter(String colName, ScalarWriter writer, int columnIndex) {
       this.colName = colName;
@@ -291,6 +296,11 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     }
   }
 
+  /**
+   * There are two known time columns in Splunk, the _time and _indextime.  As Splunk would have it,
+   * they are returned in different formats.
+   *
+   */
   public static class TimestampColumnWriter extends SplunkColumnWriter {
 
     TimestampColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
@@ -299,6 +309,9 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     @Override
     public void load(CSVRecord record) {
+      logger.debug("Field: + " + colName + " Timestamp value " + record.get(columnIndex));
+      long value = Long.parseLong(record.get(columnIndex)) * 1000;
+      columnWriter.setTimestamp(new Instant(value));
     }
   }
 }

@@ -51,7 +51,7 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
     this.hostname = hostname;
     this.port = port;
     this.earliestTime = earliestTime;
-    this.latestTime = latestTime == null ? "now" : latestTime;;
+    this.latestTime = latestTime == null ? "now" : latestTime;
   }
 
   @JsonProperty("username")

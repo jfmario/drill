@@ -35,7 +35,9 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
   @Override
   public void registerSchemas(SchemaConfig schemaConfig, SchemaPlus parent) {
 
+
     // Get Splunk Indexes
+    connection.connect();
     indexes = connection.getIndexes();
 
     for (Index index : indexes.values()) {
