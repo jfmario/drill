@@ -71,7 +71,7 @@ public class SplunkQueryBuilder {
    * Creates the field list of r
    * As an error preventative measure, this function will ignore ** from Drill.
    * @param columnList SchemaPath of columns to be added to the field list
-   * @return
+   * @return builder with the field added
    */
   public SplunkQueryBuilder addField (List<SchemaPath> columnList) {
     for (SchemaPath column : columnList) {
@@ -116,5 +116,4 @@ public class SplunkQueryBuilder {
 
     return query;
   }
-
 }

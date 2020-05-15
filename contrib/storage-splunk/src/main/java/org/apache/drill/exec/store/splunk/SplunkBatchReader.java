@@ -53,8 +53,8 @@ import java.util.Map;
 public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkBatchReader.class);
-  private static final List<String> INT_COLS = new ArrayList<String>(Arrays.asList(new String[]{"date_hour", "date_mday", "date_minute", "date_second", "date_year", "linecount"}));
-  private static final List<String> TS_COLS = new ArrayList<String>(Arrays.asList(new String[]{"_indextime", "_time"}));
+  private static final List<String> INT_COLS = new ArrayList<>(Arrays.asList("date_hour", "date_mday", "date_minute", "date_second", "date_year", "linecount"));
+  private static final List<String> TS_COLS = new ArrayList<>(Arrays.asList("_indextime", "_time"));
 
   private final SplunkPluginConfig config;
   private final SplunkSubScan subScan;
@@ -64,7 +64,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private JobExportArgs exportArgs;
   private Iterator<CSVRecord> csvIterator;
   private CustomErrorContext errorContext;
-  private List<String> columnNames;
+
   private List<SplunkColumnWriter> columnWriters;
   private CSVRecord firstRow;
   private SchemaBuilder builder;
@@ -140,12 +140,10 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    */
   private TupleMetadata buildSchema() {
     // Initialize the columnName arrayList
-    columnNames = new ArrayList<>();
 
     // Get the first row
     firstRow = csvIterator.next();
     for (String value : firstRow) {
-      columnNames.add(value);
       if (INT_COLS.contains(value)) {
         builder.addNullable(value, MinorType.INT);
       } else if (TS_COLS.contains(value)) {
@@ -298,8 +296,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   /**
    * There are two known time columns in Splunk, the _time and _indextime.  As Splunk would have it,
-   * they are returned in different formats.
-   *
+   * they are returned in different formats
    */
   public static class TimestampColumnWriter extends SplunkColumnWriter {
 
@@ -309,10 +306,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     @Override
     public void load(CSVRecord record) {
-      logger.debug("Field: + " + colName + " Timestamp value " + record.get(columnIndex));
       long value = Long.parseLong(record.get(columnIndex)) * 1000;
       columnWriter.setTimestamp(new Instant(value));
     }
   }
 }
-

@@ -18,6 +18,7 @@
 
 package org.apache.drill.exec.store.splunk;
 
+import com.splunk.ConfCollection;
 import com.splunk.EntityCollection;
 import com.splunk.HttpService;
 import com.splunk.Index;
@@ -47,6 +48,8 @@ public class SplunkConnection {
     this.hostname = config.getHostname();
     this.port = config.getPort();
     service = connect();
+    ConfCollection confs = service.getConfs();
+    int x = 4;
   }
 
   /**
@@ -54,10 +57,12 @@ public class SplunkConnection {
    * @return an active Splunk connection.
    */
   public Service connect() {
-    if (service != null) {
+
+    // TODO Check for timeout, Not sure quite how
+    /*if (service != null) {
       logger.debug("Splunk already connected.");
       return this.service;
-    }
+    }*/
 
     HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
     ServiceArgs loginArgs = new ServiceArgs();
@@ -86,9 +91,4 @@ public class SplunkConnection {
   public EntityCollection<Index> getIndexes() {
     return service.getIndexes();
   }
-
-  public Service getService() {
-    return service;
-  }
-
 }

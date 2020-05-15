@@ -34,8 +34,6 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
 
   @Override
   public void registerSchemas(SchemaConfig schemaConfig, SchemaPlus parent) {
-
-
     // Get Splunk Indexes
     connection.connect();
     indexes = connection.getIndexes();
@@ -66,6 +64,11 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
         // Register the table
         return registerTable(name, new DynamicDrillTable(plugin, plugin.getName(), new SplunkScanSpec(plugin.getName(), name, plugin.getConfig())));
       }
+    }
+
+    @Override
+    public boolean showInInformationSchema() {
+      return true;
     }
 
     @Override
