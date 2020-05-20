@@ -31,6 +31,13 @@ With this understood, it is **very** important to put time boundaries on your Sp
 ### Selecting Fields
 When you execute a query in Drill for Splunk, the fields you select are pushed down to Splunk. Therefore, it will always be more efficient to explicitly specify fields to push
  down to Splunk rather than using `SELECT *` queries.
+ 
+ ### Special Fields
+ There are several fields which can be included in a Drill query 
+ 
+ * `spl`:  If you just want to send an SPL query to Splunk, this will do that. 
+ * `earliestTime`, `earliest_time`: This 
+ * `latestTime`, `latest_time`
 
   
 ### Sorting Results
