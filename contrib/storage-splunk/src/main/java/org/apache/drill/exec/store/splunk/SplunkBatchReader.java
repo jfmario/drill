@@ -215,6 +215,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
+    // TODO Check to see if the earliest and latest time are included in the filters
     exportArgs.setEarliestTime(config.getEarliestTime());
     exportArgs.setLatestTime(config.getLatestTime());
 
@@ -299,7 +300,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   /**
    * There are two known time columns in Splunk, the _time and _indextime.  As Splunk would have it,
-   * they are returned in different formats
+   * they are returned in different formats.
    */
   public static class TimestampColumnWriter extends SplunkColumnWriter {
 

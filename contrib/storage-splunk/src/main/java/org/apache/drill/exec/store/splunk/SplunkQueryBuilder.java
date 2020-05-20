@@ -26,7 +26,6 @@ import java.util.List;
 public class SplunkQueryBuilder {
   private final String index;
   private String query;
-  private String fields;
   private String sourceTypes;
   private String fieldList;
   private int limit;
@@ -85,8 +84,15 @@ public class SplunkQueryBuilder {
     return this;
   }
 
+  /**
+   * Adds a row limit to the query. Ignores anything <= zero.
+   * @param limit Positive, non-zero integer of number of desired rows.
+   * @return
+   */
   public SplunkQueryBuilder addLimit(int limit) {
-    this.limit = limit;
+    if (limit > 0) {
+      this.limit = limit;
+    }
     return this;
   }
 
