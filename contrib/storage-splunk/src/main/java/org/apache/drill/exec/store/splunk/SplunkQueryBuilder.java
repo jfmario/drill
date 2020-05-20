@@ -92,7 +92,6 @@ public class SplunkQueryBuilder {
 
 
   public String build() {
-    // Construct the query
     // Add the sourcetype
     if (sourceTypes != null) {
       query += sourceTypes;

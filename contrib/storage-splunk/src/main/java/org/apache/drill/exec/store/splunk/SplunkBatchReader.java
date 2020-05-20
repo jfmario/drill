@@ -139,7 +139,10 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    * indextime, the various date components etc and map those as the appropriate columns.  Then map everything else as a string.
    */
   private TupleMetadata buildSchema() {
-    // Initialize the columnName arrayList
+    // Case for empty dataset
+    if (!csvIterator.hasNext()) {
+      return builder.buildSchema();
+    }
 
     // Get the first row
     firstRow = csvIterator.next();
@@ -212,7 +215,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
-    exportArgs.setEarliestTime("-14d");
+    exportArgs.setEarliestTime(config.getEarliestTime());
     exportArgs.setLatestTime(config.getLatestTime());
 
     // Pushdown the selected fields for non star queries.
