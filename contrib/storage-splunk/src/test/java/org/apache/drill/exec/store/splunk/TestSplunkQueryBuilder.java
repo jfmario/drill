@@ -65,6 +65,25 @@ public class TestSplunkQueryBuilder {
     assertEquals("search index=main sourcetype=\"access_combined_wcookie\" | table *", query);
   }
   @Test
+  public void testSingleFilterQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+    builder.addEqualityFilter("field1", "value1");
+    String query = builder.build();
+    assertEquals("search index=main field1=value1 | table *", query);
+  }
+
+  @Test
+  public void testMultipleFilterQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+    builder.addEqualityFilter("field1", "value1");
+    builder.addEqualityFilter("field2", "value2");
+    builder.addEqualityFilter("field3", "value3");
+    String query = builder.build();
+    assertEquals("search index=main field1=value1 field2=value2 field3=value3 | table *", query);
+  }
+
+
+  @Test
   public void testAddMultipleSourcetypeQuery() throws Exception {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addSourceType("access_combined_wcookie");

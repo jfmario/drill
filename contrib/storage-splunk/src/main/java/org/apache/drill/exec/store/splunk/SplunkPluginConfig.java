@@ -110,7 +110,7 @@ public class SplunkPluginConfig extends StoragePluginConfigBase {
   public String toString() {
     return new PlanStringBuilder(this)
       .field("username", username)
-      .field("password", password)
+      .maskedField("password", password)
       .field("hostname", hostname)
       .field("port", port)
       .field("earliestTime", earliestTime)

@@ -95,7 +95,10 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     */
     try {
       BufferedReader br = new BufferedReader(new InputStreamReader(searchResults, StandardCharsets.UTF_8));
-      this.csvIterator = CSVFormat.DEFAULT.parse(br).iterator();
+      this.csvIterator = CSVFormat
+        .DEFAULT
+        .parse(br)
+        .iterator();
     } catch (IOException e) {
       throw UserException
         .dataReadError(e)

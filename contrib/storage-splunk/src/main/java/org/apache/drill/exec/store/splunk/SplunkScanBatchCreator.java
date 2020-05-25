@@ -38,7 +38,8 @@ import java.util.List;
 public class SplunkScanBatchCreator implements BatchCreator<SplunkSubScan> {
 
   @Override
-  public CloseableRecordBatch getBatch(ExecutorFragmentContext context, SplunkSubScan subScan, List<RecordBatch> children) throws ExecutionSetupException {
+  public CloseableRecordBatch getBatch(ExecutorFragmentContext context,
+                                       SplunkSubScan subScan, List<RecordBatch> children) throws ExecutionSetupException {
     Preconditions.checkArgument(children.isEmpty());
 
     try {
@@ -60,21 +61,19 @@ public class SplunkScanBatchCreator implements BatchCreator<SplunkSubScan> {
     builder.setUserName(subScan.getUserName());
 
     // Reader
-    ReaderFactory readerFactory = new CassandraReaderFactory(config, subScan);
+    ReaderFactory readerFactory = new SplunkReaderFactory(config, subScan);
     builder.setReaderFactory(readerFactory);
     builder.nullType(Types.optional(MinorType.VARCHAR));
     return builder;
   }
 
-  private static class CassandraReaderFactory implements ReaderFactory {
+  private static class SplunkReaderFactory implements ReaderFactory {
 
     private final SplunkPluginConfig config;
-
     private final SplunkSubScan subScan;
-
     private int count;
 
-    public CassandraReaderFactory(SplunkPluginConfig config, SplunkSubScan subScan) {
+    public SplunkReaderFactory(SplunkPluginConfig config, SplunkSubScan subScan) {
       this.config = config;
       this.subScan = subScan;
     }

@@ -39,10 +39,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The HTTP storage plugin accepts filters which are:
+ * The Splunk storage plugin accepts filters which are:
  * <ul>
- * <li>A single column = value expression, where the column is
- * a filter column from the config, or</li>
+ * <li>A single column = value expression </li>
  * <li>An AND'ed set of such expressions,</li>
  * <li>If the value is one with an unambiguous conversion to
  * a string. (That is, not dates, binary, maps, etc.)</li>
@@ -66,11 +65,11 @@ public class SplunkPushDownListener implements FilterPushDownListener {
 
   @Override
   public ScanPushDownListener builderFor(GroupScan groupScan) {
-    SplunkGroupScan httpScan = (SplunkGroupScan) groupScan;
-    if (httpScan.hasFilters() || !httpScan.allowsFilters()) {
+    SplunkGroupScan splunkScan = (SplunkGroupScan) groupScan;
+    if (splunkScan.hasFilters() || !splunkScan.allowsFilters()) {
       return null;
     } else {
-      return new SplunkScanPushDownListener(httpScan);
+      return new SplunkScanPushDownListener(splunkScan);
     }
   }
 

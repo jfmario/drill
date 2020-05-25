@@ -28,10 +28,13 @@ public class SplunkQueryBuilder {
   private String query;
   private String sourceTypes;
   private String fieldList;
+  private String filters;
+  private int filterCount;
   private int limit;
 
   public SplunkQueryBuilder (String index) {
     this.index = index;
+    this.filters = "";
     query = "search index=" + this.index;
   }
 
@@ -86,8 +89,10 @@ public class SplunkQueryBuilder {
 
   /**
    * Adds a row limit to the query. Ignores anything <= zero.
+   * This method should only be called once, but if is called more than once,
+   * it will set the limit to the most recent value.
    * @param limit Positive, non-zero integer of number of desired rows.
-   * @return
+   * @return SplunkQueryBuilder with limit set.
    */
   public SplunkQueryBuilder addLimit(int limit) {
     if (limit > 0) {
@@ -96,11 +101,33 @@ public class SplunkQueryBuilder {
     return this;
   }
 
+  /**
+   * Adds a filter to the Splunk query.  Splunk treats all filters as
+   * AND filters, without explicitly noting that.
+   * @param left The field to be filtered
+   * @param right The value of that field
+   * @return
+   */
+  public SplunkQueryBuilder addEqualityFilter(String left, String right) {
+    filters = filters + " " + left + "=" + right;
+    filterCount++;
+    return this;
+  }
+
+  private String quoteString(String word) {
+    return "\"" + word + "\"";
+  }
+
 
   public String build() {
     // Add the sourcetype
-    if (sourceTypes != null) {
+    if (! Strings.isNullOrEmpty(sourceTypes)) {
       query += sourceTypes;
+    }
+
+    // Add filters
+    if (! Strings.isNullOrEmpty(filters)) {
+      query += filters;
     }
 
     // Add fields
