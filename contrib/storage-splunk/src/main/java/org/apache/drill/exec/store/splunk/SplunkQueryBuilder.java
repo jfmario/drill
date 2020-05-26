@@ -109,13 +109,23 @@ public class SplunkQueryBuilder {
    * @return
    */
   public SplunkQueryBuilder addEqualityFilter(String left, String right) {
-    filters = filters + " " + left + "=" + right;
+    filters = filters + " " + left + "=" + quoteString(right);
     filterCount++;
     return this;
   }
 
-  private String quoteString(String word) {
-    return "\"" + word + "\"";
+  /**
+   * Adds quotes around text for use in SPL queries. Ignores numbers
+   * @param word The input word to be quoted.
+   * @return The text with quotes
+   */
+  public String quoteString(String word) {
+
+    if (! isNumeric(word)) {
+      return "\"" + word + "\"";
+    } else {
+      return word;
+    }
   }
 
 
@@ -147,5 +157,10 @@ public class SplunkQueryBuilder {
     }
 
     return query;
+  }
+
+  public static boolean isNumeric(String str)
+  {
+    return str.matches("-?\\d+(\\.\\d+)?");
   }
 }

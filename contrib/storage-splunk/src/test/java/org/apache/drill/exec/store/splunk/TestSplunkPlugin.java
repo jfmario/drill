@@ -17,15 +17,20 @@
  */
 package org.apache.drill.exec.store.splunk;
 
-import org.apache.drill.exec.physical.rowSet.DirectRowSet;
+import org.apache.drill.categories.SlowTest;
+import org.apache.drill.categories.SplunkStorageTest;
 import org.apache.drill.exec.physical.rowSet.RowSet;
 import org.apache.drill.exec.store.StoragePluginRegistry;
 import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
-import org.apache.drill.test.QueryRowSetIterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+import static org.junit.Assert.assertEquals;
+
+//@Ignore("These tests require a running Splunk instance.")
+@Category({SlowTest.class, SplunkStorageTest.class})
 public class TestSplunkPlugin extends ClusterTest {
 
   @BeforeClass
@@ -33,7 +38,7 @@ public class TestSplunkPlugin extends ClusterTest {
     startCluster(ClusterFixture.builder(dirTestWatcher));
 
     StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
-    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, null, null);
+    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-30d", null);
     config.setEnabled(true);
     pluginRegistry.put(SplunkPluginConfig.NAME, config);
   }
@@ -41,51 +46,50 @@ public class TestSplunkPlugin extends ClusterTest {
   @Test
   public void testStarQuery() throws Exception {
     String sql = "SELECT * FROM splunk.main LIMIT 5";
-    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
-    while (results.hasNext()) {
-      DirectRowSet result = results.next();
-      result.print();
-    }
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 5";
-    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
-    while (results.hasNext()) {
-      DirectRowSet result = results.next();
-      result.print();
-    }
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsWithLimitQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 10";
-    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
-    while (results.hasNext()) {
-      DirectRowSet result = results.next();
-      result.print();
-    }
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsWithOneFieldLimitQuery() throws Exception {
     String sql = "SELECT clientip FROM splunk.main LIMIT 2";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
-    results.print();
-    /*while (results.hasNext()) {
-      DirectRowSet result = results.next();
-      result.print();
-    }*/
   }
 
   @Test
-  public void testEqualityFilterQuery() throws Exception {
+  public void testSingleEqualityFilterQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE file='cart.do'";
-    QueryRowSetIterator results = client.queryBuilder().sql(sql).rowSetIterator();
-    while (results.hasNext()) {
-      DirectRowSet result = results.next();
-      result.print();
-    }
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+  @Test
+  public void testMultipleEqualityFilterQuery() throws Exception {
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE file='cart.do' AND clientip='217.15.20.146'";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+  @Test
+  public void testFilterOnUnProjectedColumnQuery() throws Exception {
+    String sql = "SELECT _time, clientip, host FROM splunk.main WHERE file='cart.do'";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+  @Test
+  public void testSerDe() throws Exception {
+    String sql = "SELECT COUNT(*) FROM splunk.main WHERE file='cart.do' AND clientip='217.15.20.146'";
+    String plan = queryBuilder().sql(sql).explainJson();
+    long cnt = queryBuilder().physical(plan).singletonLong();
+    assertEquals("Counts should match", 48L, cnt);
   }
 }

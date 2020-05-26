@@ -69,7 +69,7 @@ public class TestSplunkQueryBuilder {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addEqualityFilter("field1", "value1");
     String query = builder.build();
-    assertEquals("search index=main field1=value1 | table *", query);
+    assertEquals("search index=main field1=\"value1\" | table *", query);
   }
 
   @Test
@@ -79,7 +79,7 @@ public class TestSplunkQueryBuilder {
     builder.addEqualityFilter("field2", "value2");
     builder.addEqualityFilter("field3", "value3");
     String query = builder.build();
-    assertEquals("search index=main field1=value1 field2=value2 field3=value3 | table *", query);
+    assertEquals("search index=main field1=\"value1\" field2=\"value2\" field3=\"value3\" | table *", query);
   }
 
 
