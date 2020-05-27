@@ -67,7 +67,7 @@ public class TestSplunkQueryBuilder {
   @Test
   public void testSingleFilterQuery() throws Exception {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
-    builder.addEqualityFilter("field1", "value1");
+    builder.addFilter("field1", "value1", SplunkQueryBuilder.EQUAL_OPERATOR);
     String query = builder.build();
     assertEquals("search index=main field1=\"value1\" | table *", query);
   }
@@ -75,21 +75,21 @@ public class TestSplunkQueryBuilder {
   @Test
   public void testMultipleFilterQuery() throws Exception {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
-    builder.addEqualityFilter("field1", "value1");
-    builder.addEqualityFilter("field2", "value2");
-    builder.addEqualityFilter("field3", "value3");
+    builder.addFilter("field1", "value1", SplunkQueryBuilder.EQUAL_OPERATOR);
+    builder.addFilter("field2", "value2", SplunkQueryBuilder.EQUAL_OPERATOR);
+    builder.addFilter("field3", "value3", SplunkQueryBuilder.EQUAL_OPERATOR);
     String query = builder.build();
     assertEquals("search index=main field1=\"value1\" field2=\"value2\" field3=\"value3\" | table *", query);
   }
-
 
   @Test
   public void testAddMultipleSourcetypeQuery() throws Exception {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addSourceType("access_combined_wcookie");
     builder.addSourceType("sourcetype2");
+    builder.addSourceType("sourcetype3");
 
     String query = builder.build();
-    assertEquals("search index=main sourcetype=\"access_combined_wcookie\" OR sourcetype=\"sourcetype2\" | table *", query);
+    assertEquals("search index=main (sourcetype=\"access_combined_wcookie\" OR sourcetype=\"sourcetype2\" OR sourcetype=\"sourcetype3\") | table *", query);
   }
 }

@@ -22,6 +22,7 @@ import com.splunk.JobExportArgs;
 import com.splunk.Service;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.drill.common.AutoCloseables;
 import org.apache.drill.common.exceptions.CustomErrorContext;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
@@ -32,6 +33,7 @@ import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
+import org.apache.drill.exec.store.splunk.filter.ExprNode;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
@@ -56,6 +58,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private static final Logger logger = LoggerFactory.getLogger(SplunkBatchReader.class);
   private static final List<String> INT_COLS = new ArrayList<>(Arrays.asList("date_hour", "date_mday", "date_minute", "date_second", "date_year", "linecount"));
   private static final List<String> TS_COLS = new ArrayList<>(Arrays.asList("_indextime", "_time"));
+  private static final String EARLIEST_TIME_COLUMN = "earliestTime";
+  private static final String LATEST_TIME_COLUMN = "latestTime";
 
   private final SplunkPluginConfig config;
   private final SplunkSubScan subScan;
@@ -64,6 +68,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private final SplunkScanSpec subScanSpec;
   private JobExportArgs exportArgs;
   private Iterator<CSVRecord> csvIterator;
+  private InputStream searchResults;
   private CustomErrorContext errorContext;
   private int rowCounter = 0;
 
@@ -92,7 +97,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     String queryString = buildQueryString();
 
     // Execute the query
-    InputStream searchResults = splunkService.export(queryString, exportArgs);
+    searchResults = splunkService.export(queryString, exportArgs);
     logger.debug("Time to execute query: {} milliseconds", timer.elapsed().getNano() / 1000000);
 
     /*
@@ -129,13 +134,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   @Override
   public boolean next() {
-    Stopwatch timer = Stopwatch.createUnstarted();
-    timer.start();
-
     while (!rowWriter.isFull()) {
       if (!processRow()) {
-        timer.stop();
-        logger.debug("Time to process {} rows: {} milliseconds", rowCounter, timer.elapsed().getNano() / 1000000);
         return false;
       }
     }
@@ -144,7 +144,10 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   @Override
   public void close() {
-
+    if (searchResults != null) {
+      AutoCloseables.closeSilently(searchResults);
+      searchResults = null;
+    }
   }
 
   /**
@@ -215,6 +218,9 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   private String buildQueryString () {
     String query = "search ";
+    String earliestTime = null;
+    String latestTime = null;
+    Map<String, ExprNode.ColRelOpConstNode> filters = subScan.getFilters();
 
     SplunkQueryBuilder builder = new SplunkQueryBuilder(subScanSpec.getIndexName());
 
@@ -234,28 +240,38 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
-    // TODO Check to see if the earliest and latest time are included in the filters
-    exportArgs.setEarliestTime(config.getEarliestTime());
-    exportArgs.setLatestTime(config.getLatestTime());
+    if (filters != null && filters.containsKey(EARLIEST_TIME_COLUMN)) {
+      earliestTime = ((ExprNode.ColRelOpConstNode)filters.get(EARLIEST_TIME_COLUMN)).value.value.toString();
+
+      // Remove from map
+      filters.remove(EARLIEST_TIME_COLUMN);
+    }
+
+    if (filters != null && filters.containsKey(LATEST_TIME_COLUMN)) {
+      latestTime = ((ExprNode.ColRelOpConstNode)filters.get(LATEST_TIME_COLUMN)).value.value.toString();
+
+      // Remove from map
+      filters.remove(LATEST_TIME_COLUMN);
+    }
+
+    if (earliestTime == null) {
+      earliestTime = config.getEarliestTime();
+    }
+
+    if (latestTime == null) {
+      latestTime = config.getLatestTime();
+    }
+
+    exportArgs.setEarliestTime(earliestTime);
+    exportArgs.setLatestTime(latestTime);
 
     // Pushdown the selected fields for non star queries.
     if (! Utilities.isStarQuery(projectedColumns)) {
       builder.addField(projectedColumns);
     }
 
-    // Add sourcetype if present
-    // TODO For testing only
-    builder.addSourceType("access_combined_wcookie");
-
     // Apply filters
-    Map<String, String> filters = subScan.getFilters();
-
-    // Since Splunk treats filters as AND filters by default, they can simply be added to the search string
-    if (filters != null) {
-      for (Map.Entry filter : filters.entrySet()) {
-        builder.addEqualityFilter((String)filter.getKey(), (String)filter.getValue());
-      }
-    }
+    builder.addFilters(filters);
 
     // Apply limits
     if (subScan.getMaxRecords() > 0) {

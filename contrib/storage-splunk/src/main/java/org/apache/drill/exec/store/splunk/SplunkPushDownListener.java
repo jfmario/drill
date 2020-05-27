@@ -142,11 +142,11 @@ public class SplunkPushDownListener implements FilterPushDownListener {
      */
     @Override
     public Pair<GroupScan, List<RexNode>> transform(AndNode andNode) {
-      Map<String, String> filters = new HashMap<>();
+      Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
       double selectivity = 1;
       for (ExprNode expr : andNode.children) {
         ColRelOpConstNode relOp = (ColRelOpConstNode) expr;
-        filters.put(filterParams.get(relOp.colName), relOp.value.value.toString());
+        filters.put(filterParams.get(relOp.colName), relOp);
         selectivity *= relOp.op.selectivity();
       }
       SplunkGroupScan newScan = new SplunkGroupScan(groupScan, filters, selectivity);

@@ -30,6 +30,7 @@ import org.apache.drill.exec.physical.base.ScanStats;
 import org.apache.drill.exec.physical.base.SubScan;
 import org.apache.drill.exec.planner.logical.DrillScanRel;
 import org.apache.drill.exec.proto.CoordinationProtos;
+import org.apache.drill.exec.store.splunk.filter.ExprNode;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 
@@ -42,7 +43,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
   private final SplunkPluginConfig config;
   private final List<SchemaPath> columns;
   private final SplunkScanSpec splunkScanSpec;
-  private final Map<String, String> filters;
+  private final Map<String, ExprNode.ColRelOpConstNode> filters;
   private final ScanStats scanStats;
   private final double filterSelectivity;
   private int maxRecords;
@@ -101,7 +102,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
   /**
    * Adds a filter to the scan.
    */
-  public SplunkGroupScan(SplunkGroupScan that, Map<String, String> filters,
+  public SplunkGroupScan(SplunkGroupScan that, Map<String, ExprNode.ColRelOpConstNode> filters,
                        double filterSelectivity) {
     super(that);
     this.columns = that.columns;
@@ -124,7 +125,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     @JsonProperty("config") SplunkPluginConfig config,
     @JsonProperty("columns") List<SchemaPath> columns,
     @JsonProperty("splunkScanSpec") SplunkScanSpec splunkScanSpec,
-    @JsonProperty("filters") Map<String, String> filters,
+    @JsonProperty("filters") Map<String, ExprNode.ColRelOpConstNode> filters,
     @JsonProperty("filterSelectivity") double selectivity,
     @JsonProperty("maxRecords") int maxRecords
   ) {
@@ -148,7 +149,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
   public SplunkScanSpec splunkScanSpec() { return splunkScanSpec; }
 
   @JsonProperty("filters")
-  public Map<String, String> filters() { return filters; }
+  public Map<String, ExprNode.ColRelOpConstNode> filters() { return filters; }
 
   @JsonProperty("maxRecords")
   public int maxRecords() { return maxRecords; }
@@ -259,7 +260,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // Hash code is cached since Calcite calls this method many times.
     if (hashCode == 0) {
       // Don't include cost; it is derived.
-      hashCode = Objects.hash(config, splunkScanSpec, columns, filters);
+      hashCode = Objects.hash(splunkScanSpec, config, splunkScanSpec, columns);
     }
     return hashCode;
   }
@@ -278,7 +279,6 @@ public class SplunkGroupScan extends AbstractGroupScan {
     return Objects.equals(splunkScanSpec, other.splunkScanSpec())
       && Objects.equals(config, other.config())
       && Objects.equals(columns, other.columns())
-      && Objects.equals(filters, other.filters())
       && Objects.equals(maxRecords, other.maxRecords());
   }
 
@@ -288,7 +288,6 @@ public class SplunkGroupScan extends AbstractGroupScan {
       .field("config", config)
       .field("scan spec", splunkScanSpec)
       .field("columns", columns)
-      .field("filters", filters)
       .field("maxRecords", maxRecords)
       .toString();
   }

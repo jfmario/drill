@@ -28,6 +28,7 @@ import org.apache.drill.exec.physical.base.AbstractBase;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.PhysicalVisitor;
 import org.apache.drill.exec.physical.base.SubScan;
+import org.apache.drill.exec.store.splunk.filter.ExprNode;
 import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableSet;
 
 import java.util.Iterator;
@@ -41,7 +42,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
   private final SplunkPluginConfig config;
   private final SplunkScanSpec splunkScanSpec;
   private final List<SchemaPath> columns;
-  private final Map<String, String> filters;
+  private final Map<String, ExprNode.ColRelOpConstNode> filters;
   private final int maxRecords;
 
   @JsonCreator
@@ -49,7 +50,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
     @JsonProperty("config") SplunkPluginConfig config,
     @JsonProperty("tableSpec") SplunkScanSpec splunkScanSpec,
     @JsonProperty("columns") List<SchemaPath> columns,
-    @JsonProperty("filters") Map<String, String> filters,
+    @JsonProperty("filters") Map<String, ExprNode.ColRelOpConstNode> filters,
     @JsonProperty("maxRecords") int maxRecords) {
       super("user");
       this.config = config;
@@ -75,7 +76,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
   }
 
   @JsonProperty("filters")
-  public Map<String, String> getFilters() {
+  public Map<String, ExprNode.ColRelOpConstNode> getFilters() {
     return filters;
   }
 

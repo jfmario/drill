@@ -38,20 +38,20 @@ public class TestSplunkPlugin extends ClusterTest {
     startCluster(ClusterFixture.builder(dirTestWatcher));
 
     StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
-    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-30d", null);
+    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-60d", null);
     config.setEnabled(true);
     pluginRegistry.put(SplunkPluginConfig.NAME, config);
   }
 
   @Test
   public void testStarQuery() throws Exception {
-    String sql = "SELECT * FROM splunk.main LIMIT 5";
+    String sql = "SELECT * FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 5";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 5";
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 5";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
