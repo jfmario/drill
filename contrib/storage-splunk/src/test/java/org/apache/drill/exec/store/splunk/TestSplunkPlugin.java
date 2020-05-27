@@ -45,19 +45,25 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testStarQuery() throws Exception {
-    String sql = "SELECT * FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 5";
+    String sql = "SELECT * FROM splunk.main LIMIT 5";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 5";
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
   @Test
   public void testExplictFieldsWithLimitQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 10";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+  @Test
+  public void testExplictFieldsWithSourcetype() throws Exception {
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 10";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
   }
 
@@ -87,9 +93,9 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testSerDe() throws Exception {
-    String sql = "SELECT COUNT(*) FROM splunk.main WHERE file='cart.do' AND clientip='217.15.20.146'";
+    String sql = "SELECT COUNT(*) FROM splunk.main WHERE sourcetype='access_combined_wcookie' AND file='cart.do' AND clientip='217.15.20.146'";
     String plan = queryBuilder().sql(sql).explainJson();
     long cnt = queryBuilder().physical(plan).singletonLong();
-    assertEquals("Counts should match", 48L, cnt);
+    assertEquals("Counts should match", 164L, cnt);
   }
 }

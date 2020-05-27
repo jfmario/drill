@@ -30,7 +30,7 @@ import org.apache.drill.exec.physical.base.ScanStats;
 import org.apache.drill.exec.physical.base.SubScan;
 import org.apache.drill.exec.planner.logical.DrillScanRel;
 import org.apache.drill.exec.proto.CoordinationProtos;
-import org.apache.drill.exec.store.splunk.filter.ExprNode;
+import org.apache.drill.exec.store.base.filter.ExprNode;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 
@@ -220,12 +220,16 @@ public class SplunkGroupScan extends AbstractGroupScan {
     }
 
     // No good estimates at all, just make up something.
-    double estRowCount = 10_000;
+    double estRowCount = 100_000;
 
     // NOTE this was important! if the predicates don't make the query more
     // efficient they won't get pushed down
     if (hasFilters()) {
       estRowCount *= filterSelectivity;
+    }
+
+    if (maxRecords > 0) {
+      estRowCount = maxRecords;
     }
 
     double estColCount = Utilities.isStarQuery(columns) ? DrillScanRel.STAR_COLUMN_COST : columns.size();

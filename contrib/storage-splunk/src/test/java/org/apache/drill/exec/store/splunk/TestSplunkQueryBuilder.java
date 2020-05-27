@@ -18,7 +18,14 @@
 
 package org.apache.drill.exec.store.splunk;
 
+import org.apache.drill.common.types.TypeProtos;
+import org.apache.drill.exec.store.base.filter.ConstantHolder;
+import org.apache.drill.exec.store.base.filter.ExprNode;
+import org.apache.drill.exec.store.base.filter.RelOp;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -47,6 +54,59 @@ public class TestSplunkQueryBuilder {
     builder.addField("field3");
     String query = builder.build();
     assertEquals("search index=main | fields field1,field2,field3 | table field1,field2,field3", query);
+  }
+
+  @Test
+  public void testFieldsAndFiltersQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.EQ, new ConstantHolder(TypeProtos.MinorType.VARCHAR, "foo")));
+
+    builder.addField("field1");
+    builder.addField("field2");
+    builder.addField("field3");
+
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main field1=\"foo\" | fields field1,field2,field3 | table field1,field2,field3", query);
+  }
+
+  @Test
+  public void testFieldsAndSourcetypeQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.EQ, new ConstantHolder(TypeProtos.MinorType.VARCHAR, "foo")));
+    filters.put("sourcetype", new ExprNode.ColRelOpConstNode("sourcetype", RelOp.EQ, new ConstantHolder(TypeProtos.MinorType.VARCHAR, "st")));
+
+    builder.addField("field1");
+    builder.addField("field2");
+    builder.addField("field3");
+
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main sourcetype=\"st\" field1=\"foo\" | fields field1,field2,field3 | table field1,field2,field3", query);
+  }
+
+  @Test
+  public void testStarAndSourcetypeQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.EQ, new ConstantHolder(TypeProtos.MinorType.VARCHAR, "foo")));
+    filters.put("sourcetype", new ExprNode.ColRelOpConstNode("sourcetype", RelOp.EQ, new ConstantHolder(TypeProtos.MinorType.VARCHAR, "st")));
+
+    builder.addField("field1");
+    builder.addField("field2");
+    builder.addField("field3");
+
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main sourcetype=\"st\" field1=\"foo\" | fields field1,field2,field3 | table field1,field2,field3", query);
   }
 
   @Test

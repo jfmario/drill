@@ -28,7 +28,7 @@ import org.apache.drill.exec.physical.base.AbstractBase;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.PhysicalVisitor;
 import org.apache.drill.exec.physical.base.SubScan;
-import org.apache.drill.exec.store.splunk.filter.ExprNode;
+import org.apache.drill.exec.store.base.filter.ExprNode;
 import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableSet;
 
 import java.util.Iterator;

@@ -28,7 +28,7 @@ import org.apache.drill.exec.planner.PlannerPhase;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.store.AbstractStoragePlugin;
 import org.apache.drill.exec.store.SchemaConfig;
-import org.apache.drill.exec.store.splunk.filter.FilterPushDownUtils;
+import org.apache.drill.exec.store.base.filter.FilterPushDownUtils;
 import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;

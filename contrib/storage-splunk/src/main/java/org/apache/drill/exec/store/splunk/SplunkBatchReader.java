@@ -33,8 +33,7 @@ import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
-import org.apache.drill.exec.store.splunk.filter.ExprNode;
-import org.apache.drill.exec.util.Utilities;
+import org.apache.drill.exec.store.base.filter.ExprNode;
 import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.drill.shaded.guava.com.google.common.base.Strings;
@@ -70,12 +69,34 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private Iterator<CSVRecord> csvIterator;
   private InputStream searchResults;
   private CustomErrorContext errorContext;
-  private int rowCounter = 0;
 
   private List<SplunkColumnWriter> columnWriters;
   private CSVRecord firstRow;
   private SchemaBuilder builder;
   private RowSetLoader rowWriter;
+
+  /**
+   * These are special fields that alter the queries sent to Splunk.
+   */
+  private enum SPECIAL_FIELDS {
+
+    /**
+     * The sourcetype of a query. Specifying the sourcetype can improve query performance.
+     */
+    sourcetype,
+    /**
+     * Used to send raw SPL to Splunk
+     */
+    spl,
+    /**
+     * The earliest time boundary of a query
+     */
+    earliestTime,
+    /**
+     * The latest time bound of a query
+     */
+    latestTime
+  }
 
 
   public SplunkBatchReader(SplunkPluginConfig config, SplunkSubScan subScan) {
@@ -211,9 +232,30 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     for (SplunkColumnWriter columnWriter : columnWriters) {
       columnWriter.load(record);
     }
-    rowCounter++;
     rowWriter.save();
     return true;
+  }
+
+
+  /**
+   * Checks to see whether the query is a star query. For our purposes, the star query is
+   * anything that contains only the ** and the SPECIAL_COLUMNS which are not projected.
+   * @return true if it is a star query, false if not.
+   */
+  private boolean isStarQuery() {
+    boolean isStarQuery = false;
+    List specialFields = Arrays.asList(SPECIAL_FIELDS.values());
+
+    for (SchemaPath path: projectedColumns) {
+      if (path.nameEquals("**")) {
+        isStarQuery = true;
+      } else if (specialFields.contains(path.getAsNamePart())) {
+        isStarQuery = true;
+      } else {
+        return false;
+      }
+    }
+    return isStarQuery;
   }
 
   private String buildQueryString () {
@@ -236,7 +278,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Set output mode to CSV
     exportArgs.setOutputMode(JobExportArgs.OutputMode.CSV);
     exportArgs.setEnableLookups(true);
-
+    isStarQuery();
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
@@ -265,8 +307,15 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     exportArgs.setEarliestTime(earliestTime);
     exportArgs.setLatestTime(latestTime);
 
+    // Set the sourcetype
+    if (filters != null && filters.containsKey("sourcetype")) {
+      String sourcetype = ((ExprNode.ColRelOpConstNode)filters.get("sourcetype")).value.value.toString();
+      builder.addSourceType(sourcetype);
+      filters.remove("sourcetype");
+    }
+
     // Pushdown the selected fields for non star queries.
-    if (! Utilities.isStarQuery(projectedColumns)) {
+    if (! isStarQuery()) {
       builder.addField(projectedColumns);
     }
 
