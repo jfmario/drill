@@ -47,6 +47,7 @@ public class TestSplunkPlugin extends ClusterTest {
   public void testStarQuery() throws Exception {
     String sql = "SELECT * FROM splunk.main LIMIT 5";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
   }
 
   @Test

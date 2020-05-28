@@ -46,7 +46,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
   private final Map<String, ExprNode.ColRelOpConstNode> filters;
   private final ScanStats scanStats;
   private final double filterSelectivity;
-  private int maxRecords;
+  private final int maxRecords;
 
   private int hashCode;
 
@@ -60,8 +60,9 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.columns = ALL_COLUMNS;
     this.filters = null;
     this.filterSelectivity = 0.0;
-    this.scanStats = computeScanStats();
     this.maxRecords = -1;
+    this.scanStats = computeScanStats();
+
   }
 
   /**
@@ -95,8 +96,9 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // to again assign columns. Retain filters, but compute new stats.
     this.filters = that.filters;
     this.filterSelectivity = that.filterSelectivity;
-    this.scanStats = computeScanStats();
     this.maxRecords = that.maxRecords;
+    this.scanStats = computeScanStats();
+
   }
 
   /**
@@ -112,8 +114,8 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // Applies a filter.
     this.filters = filters;
     this.filterSelectivity = filterSelectivity;
-    this.scanStats = computeScanStats();
     this.maxRecords = that.maxRecords;
+    this.scanStats = computeScanStats();
   }
 
   /**
@@ -135,8 +137,25 @@ public class SplunkGroupScan extends AbstractGroupScan {
     this.splunkScanSpec = splunkScanSpec;
     this.filters = filters;
     this.filterSelectivity = selectivity;
-    this.scanStats = computeScanStats();
     this.maxRecords = maxRecords;
+    this.scanStats = computeScanStats();
+  }
+
+  /**
+   * Adds a limit to the group scan
+   * @param that Previous SplunkGroupScan
+   * @param maxRecords the limit pushdown
+   */
+  public SplunkGroupScan(SplunkGroupScan that, int maxRecords) {
+    super(that);
+    this.columns = that.columns;
+    // Apply the limit
+    this.maxRecords = maxRecords;
+    this.splunkScanSpec = that.splunkScanSpec;
+    this.config = that.config;
+    this.filters = that.filters;
+    this.filterSelectivity = that.filterSelectivity;
+    this.scanStats = computeScanStats();
   }
 
   @JsonProperty("config")
@@ -183,10 +202,10 @@ public class SplunkGroupScan extends AbstractGroupScan {
 
   @Override
   public GroupScan applyLimit(int maxRecords) {
-    this.maxRecords = maxRecords;
-    // Uncertain as to why, but returning a new GroupScan object or this with the
-    // maxLimit set causes infinite looping. Setting the maxRecords and returning null solves that.
-    return null;
+    if (maxRecords == this.maxRecords) {
+      return null;
+    }
+    return new SplunkGroupScan(this, maxRecords);
   }
 
   @Override
@@ -214,7 +233,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     // If this config allows filters, then make the default
     // cost very high to force the planner to choose the version
     // with filters.
-    if (allowsFilters() && !hasFilters()) {
+    if (allowsFilters() && !hasFilters() && !hasLimit()) {
       return new ScanStats(ScanStats.GroupScanProperty.ESTIMATED_TOTAL_COST,
         1E9, 1E112, 1E12);
     }
@@ -229,7 +248,7 @@ public class SplunkGroupScan extends AbstractGroupScan {
     }
 
     if (maxRecords > 0) {
-      estRowCount = maxRecords;
+      estRowCount = estRowCount / 2;
     }
 
     double estColCount = Utilities.isStarQuery(columns) ? DrillScanRel.STAR_COLUMN_COST : columns.size();
@@ -247,6 +266,9 @@ public class SplunkGroupScan extends AbstractGroupScan {
   public boolean hasFilters() {
     return filters != null;
   }
+
+  @JsonIgnore
+  public boolean hasLimit() { return maxRecords == -1; }
 
   @JsonIgnore
   public boolean allowsFilters() {

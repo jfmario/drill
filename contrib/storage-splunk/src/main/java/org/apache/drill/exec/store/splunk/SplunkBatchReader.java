@@ -20,11 +20,10 @@ package org.apache.drill.exec.store.splunk;
 
 import com.splunk.JobExportArgs;
 import com.splunk.Service;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.drill.common.AutoCloseables;
 import org.apache.drill.common.exceptions.CustomErrorContext;
-import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
@@ -41,14 +40,9 @@ import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -65,15 +59,17 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private final List<SchemaPath> projectedColumns;
   private final Service splunkService;
   private final SplunkScanSpec subScanSpec;
+  private final CsvParserSettings csvSettings;
   private JobExportArgs exportArgs;
-  private Iterator<CSVRecord> csvIterator;
   private InputStream searchResults;
+  private CsvParser csvReader;
+  private String[] firstRow;
   private CustomErrorContext errorContext;
 
   private List<SplunkColumnWriter> columnWriters;
-  private CSVRecord firstRow;
   private SchemaBuilder builder;
   private RowSetLoader rowWriter;
+  private Stopwatch timer;
 
   /**
    * These are special fields that alter the queries sent to Splunk.
@@ -106,11 +102,14 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     this.subScanSpec = subScan.getScanSpec();
     SplunkConnection connection = new SplunkConnection(config);
     this.splunkService = connection.connect();
+
+    this.csvSettings = new CsvParserSettings();
+    csvSettings.setLineSeparatorDetectionEnabled(true);
   }
 
   @Override
   public boolean open(SchemaNegotiator negotiator) {
-    Stopwatch timer = Stopwatch.createUnstarted();
+    timer = Stopwatch.createUnstarted();
     timer.start();
 
     this.errorContext = negotiator.parentErrorContext();
@@ -119,25 +118,16 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Execute the query
     searchResults = splunkService.export(queryString, exportArgs);
-    logger.debug("Time to execute query: {} milliseconds", timer.elapsed().getNano() / 1000000);
+    logger.debug("Time to execute query: {} milliseconds", timer.elapsed().getNano() / 100000);
 
     /*
     Splunk produces poor output from the API.  Of the available choices, CSV was the easiest to deal with.  Unfortunately,
     the data is not consistent, as some fields are quoted, some are not.
     */
-    try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(searchResults, StandardCharsets.UTF_8));
-      this.csvIterator = CSVFormat
-        .DEFAULT
-        .parse(br)
-        .iterator();
-    } catch (IOException e) {
-      throw UserException
-        .dataReadError(e)
-        .message("Error reading data from Splunk")
-        .addContext(errorContext)
-        .build(logger);
-    }
+    this.csvReader = new CsvParser(csvSettings);
+    csvReader.beginParsing(searchResults);
+
+    logger.debug("Time to open input stream: {} milliseconds", timer.elapsed().getNano() / 100000);
 
     // Build the Schema
     builder = new SchemaBuilder();
@@ -149,7 +139,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     rowWriter = resultLoader.writer();
     populateWriterArray();
     timer.stop();
-    logger.debug("Completed open function in {} milliseconds", timer.elapsed().getNano() / 1000000);
+    logger.debug("Completed open function in {} milliseconds", timer.elapsed().getNano() / 100000);
     return true;
   }
 
@@ -178,26 +168,29 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    * indextime, the various date components etc and map those as the appropriate columns.  Then map everything else as a string.
    */
   private TupleMetadata buildSchema() {
-    Stopwatch timer = Stopwatch.createUnstarted();
-    timer.start();
+
+    this.firstRow = csvReader.parseNext();
+
     // Case for empty dataset
-    if (!csvIterator.hasNext()) {
+    if (firstRow == null) {
       return builder.buildSchema();
     }
 
-    // Get the first row
-    firstRow = csvIterator.next();
+    // Parse the first row
     for (String value : firstRow) {
       if (INT_COLS.contains(value)) {
         builder.addNullable(value, MinorType.INT);
       } else if (TS_COLS.contains(value)) {
         builder.addNullable(value, MinorType.TIMESTAMP);
       } else {
-        builder.addNullable(value, MinorType.VARCHAR);
+        try {
+          builder.addNullable(value, MinorType.VARCHAR);
+        } catch (Exception e) {
+          logger.warn("Splunk attempted to add duplicate column {}", value);
+        }
       }
     }
-    timer.stop();
-    logger.debug("Time to build schmea: {} milliseconds", timer.elapsed().getNano() / 1000000);
+    logger.debug("Time to build schmea: {} milliseconds", timer.elapsed().getNano() / 100000);
     return builder.buildSchema();
   }
 
@@ -205,7 +198,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     columnWriters = new ArrayList<>();
 
     // Case for empty result set
-    if (firstRow == null || firstRow.size() == 0) {
+    if (firstRow == null || firstRow.length == 0) {
       return;
     }
 
@@ -220,17 +213,17 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       }
       colPosition++;
     }
+    logger.debug("Time to populate writer array: {} milliseconds", timer.elapsed().getNano() / 100000);
   }
 
   private boolean processRow() {
-    if (! csvIterator.hasNext()) {
+    String[] nextRow = csvReader.parseNext();
+    if (nextRow == null) {
       return false;
     }
-    CSVRecord record = csvIterator.next();
-
     rowWriter.start();
     for (SplunkColumnWriter columnWriter : columnWriters) {
-      columnWriter.load(record);
+      columnWriter.load(nextRow);
     }
     rowWriter.save();
     return true;
@@ -278,19 +271,18 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Set output mode to CSV
     exportArgs.setOutputMode(JobExportArgs.OutputMode.CSV);
     exportArgs.setEnableLookups(true);
-    isStarQuery();
 
     // Splunk searches perform best when they are time bound.  This allows the user to set
     // default time boundaries in the config.  These will be overwritten in filter pushdowns
     if (filters != null && filters.containsKey(EARLIEST_TIME_COLUMN)) {
-      earliestTime = ((ExprNode.ColRelOpConstNode)filters.get(EARLIEST_TIME_COLUMN)).value.value.toString();
+      earliestTime = filters.get(EARLIEST_TIME_COLUMN).value.value.toString();
 
       // Remove from map
       filters.remove(EARLIEST_TIME_COLUMN);
     }
 
     if (filters != null && filters.containsKey(LATEST_TIME_COLUMN)) {
-      latestTime = ((ExprNode.ColRelOpConstNode)filters.get(LATEST_TIME_COLUMN)).value.value.toString();
+      latestTime = filters.get(LATEST_TIME_COLUMN).value.value.toString();
 
       // Remove from map
       filters.remove(LATEST_TIME_COLUMN);
@@ -344,7 +336,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       this.columnIndex = columnIndex;
     }
 
-    public void load(CSVRecord record) {}
+    public void load(String[] record) {}
   }
 
   public static class StringColumnWriter extends SplunkColumnWriter {
@@ -354,8 +346,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     }
 
     @Override
-    public void load(CSVRecord record) {
-      String value = record.get(columnIndex);
+    public void load(String[] record) {
+      String value = record[columnIndex];
       if (Strings.isNullOrEmpty(value)) {
         columnWriter.setNull();
       } else {
@@ -371,8 +363,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     }
 
     @Override
-    public void load(CSVRecord record) {
-      int value = Integer.parseInt(record.get(columnIndex));
+    public void load(String[] record) {
+      int value = Integer.parseInt(record[columnIndex]);
       columnWriter.setInt(value);
     }
   }
@@ -388,8 +380,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     }
 
     @Override
-    public void load(CSVRecord record) {
-      long value = Long.parseLong(record.get(columnIndex)) * 1000;
+    public void load(String[] record) {
+      long value = Long.parseLong(record[columnIndex]) * 1000;
       columnWriter.setTimestamp(new Instant(value));
     }
   }
