@@ -1,10 +1,10 @@
 # Drill Connector for Splunk
-This plugin enables Drill to query Splunk clusters. 
+This plugin enables Drill to query Splunk. 
 
 ## Configuration
 To connect Drill to Splunk, create a new storage plugin with the following configuration:
 
-To successfully connect, Splunk uses port `8089` for interfaces.  This port must be open for Drill to query Splunk data. 
+To successfully connect, Splunk uses port `8089` for interfaces.  This port must be open for Drill to query Splunk. 
 
 ```json
 {
@@ -22,11 +22,26 @@ To successfully connect, Splunk uses port `8089` for interfaces.  This port must
 ## Understanding Splunk's Data Model
 Splunk's primary use case is analyzing event logs with a timestamp. As such, data is indexed by the timestamp, with the most recent data being indexed first.  By default, Splunk
  will sort the data in reverse chronological order.  Large Splunk installations will put older data into buckets of hot, warm and cold storage with the "cold" storage on the
-  slowest and cheapest disks. 
+  slowest and cheapest disks.
   
 With this understood, it is **very** important to put time boundaries on your Splunk queries. The Drill plugin allows you to set default values in the configuration such that every
- query you run will be bounded by these boundaries.  Alternatively, you can set the time boundaries at query time.  In either case, the best performance will be achieved when
-  you query the least amount of the most recent data.
+ query you run will be bounded by these boundaries.  Alternatively, you can set the time boundaries at query time.  In either case, you will achieve the best performance when
+  
+  ### Data Types
+  Splunk does not have sophisticated data types and unfortunately does not provide metadata from its query results.  With the exception of the fields below, Drill will interpret
+   all fields as `VARCHAR` and hence you will have to convert them to the appropriate data type at query time.
+  
+  #### Timestamp Fields
+  * `_indextime`
+  * `_time` 
+  
+  #### Numeric Fields
+  * `date_hour` 
+  * `date_mday`
+  * `date_minute`
+  * `date_second` 
+  * `date_year`
+  * `linecount`
   
 ### Selecting Fields
 When you execute a query in Drill for Splunk, the fields you select are pushed down to Splunk. Therefore, it will always be more efficient to explicitly specify fields to push
@@ -36,11 +51,8 @@ When you execute a query in Drill for Splunk, the fields you select are pushed d
  There are several fields which can be included in a Drill query 
  
  * `spl`:  If you just want to send an SPL query to Splunk, this will do that. 
- * `earliestTime`, `earliest_time`: This 
- * `latestTime`, `latest_time`
-
+ * `earliestTime`: Overrides the `earliestTime` setting in the configuration. 
+ * `latestTime`: Overrides the `latestTime` setting in the configuration. 
   
 ### Sorting Results
 Due to the nature of Splunk indexes, data will always be returned in reverse chronological order. Thus, sorting is not necessary if that is the desired order.
-
-
