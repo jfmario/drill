@@ -69,6 +69,33 @@ public class TestSplunkPlugin extends ClusterTest {
   }
 
   @Test
+  public void verifyIndexes() throws Exception {
+    String sql = "SHOW TABLES IN `splunk`";
+
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("TABLE_SCHEMA", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("TABLE_NAME", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .buildSchema();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow("splunk", "summary")
+      .addRow("splunk", "splunklogger")
+      .addRow("splunk", "_thefishbucket")
+      .addRow("splunk", "_audit")
+      .addRow("splunk", "_internal")
+      .addRow("splunk", "_introspection")
+      .addRow("splunk", "main")
+      .addRow("splunk", "history")
+      .addRow("splunk", "_telemetry")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
+  }
+
+  @Test
   public void testStarQuery() throws Exception {
     String sql = "SELECT * FROM splunk.main LIMIT 5";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
