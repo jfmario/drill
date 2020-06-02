@@ -229,7 +229,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     return true;
   }
 
-
   /**
    * Checks to see whether the query is a star query. For our purposes, the star query is
    * anything that contains only the ** and the SPECIAL_COLUMNS which are not projected.
@@ -301,7 +300,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     // Set the sourcetype
     if (filters != null && filters.containsKey("sourcetype")) {
-      String sourcetype = ((ExprNode.ColRelOpConstNode)filters.get("sourcetype")).value.value.toString();
+      String sourcetype = filters.get("sourcetype").value.value.toString();
       builder.addSourceType(sourcetype);
       filters.remove("sourcetype");
     }
@@ -370,8 +369,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   }
 
   /**
-   * There are two known time columns in Splunk, the _time and _indextime.  As Splunk would have it,
-   * they are returned in different formats.
+   * There are two known time columns in Splunk, the _time and _indextime.
    */
   public static class TimestampColumnWriter extends SplunkColumnWriter {
 

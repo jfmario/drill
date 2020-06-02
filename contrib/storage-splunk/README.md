@@ -28,15 +28,42 @@ With this understood, it is **very** important to put time boundaries on your Sp
  query you run will be bounded by these boundaries.  Alternatively, you can set the time boundaries at query time.  In either case, you will achieve the best performance when
   you are asking Splunk for the smallest amount of data possible.
   
-  ## Bounding Your Queries
+## Understanding Drill's Data Model with Splunk
+Drill treats Splunk indexes as tables. Splunk's access model does not restrict to the catalog, but does restrict access to the actual data. It is therefore possible that you can
+ see the names of indexes to which you do not have access.
+  
+```
+apache drill> SHOW TABLES IN splunk;
++--------------+----------------+
+| TABLE_SCHEMA |   TABLE_NAME   |
++--------------+----------------+
+| splunk       | summary        |
+| splunk       | splunklogger   |
+| splunk       | _thefishbucket |
+| splunk       | _audit         |
+| splunk       | _internal      |
+| splunk       | _introspection |
+| splunk       | main           |
+| splunk       | history        |
+| splunk       | _telemetry     |
++--------------+----------------+
+9 rows selected (0.304 seconds)
+```
+To query Splunk from Drill, use the following format: 
+```sql
+SELECT <fields>
+FROM splunk.<index>
+```
+  
+ ## Bounding Your Queries
   When you learn to query Splunk via their interface, the first thing you learn is to bound your queries so that they are looking at the shortest time span possible. When using
    Drill to query Splunk, it is advisable to do the same thing, and Drill offers two ways to accomplish this: via the configuration and at query time.
    
   ### Bounding your Queries at Query Time
-  The easiest way to bound your query is to do so at querytime via special filters in the `WHERE` clause. There are two 
+  The easiest way to bound your query is to do so at querytime via special filters in the `WHERE` clause. There are two special fields, `earliestTime` and `latestTime` which can
+   be set to bound the query. If they are not set, the query will be bounded to the defaults set in the configuration.
    
-   
-   
+   You can use any of the time formats specified in the Splunk documentation here:   
   https://docs.splunk.com/Documentation/Splunk/8.0.3/SearchReference/SearchTimeModifiers
   
   ### Data Types

@@ -697,6 +697,10 @@ public final class UserBitShared {
      * <code>HTTP_SUB_SCAN = 70;</code>
      */
     HTTP_SUB_SCAN(70),
+    /**
+     * <code>SPLUNK_SUB_SCAN = 71;</code>
+     */
+    SPLUNK_SUB_SCAN(71),
     ;
 
     /**
@@ -983,6 +987,10 @@ public final class UserBitShared {
      * <code>HTTP_SUB_SCAN = 70;</code>
      */
     public static final int HTTP_SUB_SCAN_VALUE = 70;
+    /**
+     * <code>SPLUNK_SUB_SCAN = 71;</code>
+     */
+    public static final int SPLUNK_SUB_SCAN_VALUE = 71;
 
 
     public final int getNumber() {
@@ -1076,6 +1084,7 @@ public final class UserBitShared {
         case 68: return DRUID_SUB_SCAN;
         case 69: return SPSS_SUB_SCAN;
         case 70: return HTTP_SUB_SCAN;
+        case 71: return SPLUNK_SUB_SCAN;
         default: return null;
       }
     }
