@@ -57,13 +57,6 @@ public class SplunkConnection {
    * @return an active Splunk connection.
    */
   public Service connect() {
-
-    // TODO Check for timeout, Not sure quite how
-    /*if (service != null) {
-      logger.debug("Splunk already connected.");
-      return this.service;
-    }*/
-
     HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
     ServiceArgs loginArgs = new ServiceArgs();
     loginArgs.setHost(hostname);

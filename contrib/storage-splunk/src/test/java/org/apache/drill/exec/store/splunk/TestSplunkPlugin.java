@@ -19,10 +19,15 @@ package org.apache.drill.exec.store.splunk;
 
 import org.apache.drill.categories.SlowTest;
 import org.apache.drill.categories.SplunkStorageTest;
+import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.rowSet.RowSet;
+import org.apache.drill.exec.physical.rowSet.RowSetBuilder;
+import org.apache.drill.exec.record.metadata.SchemaBuilder;
+import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.store.StoragePluginRegistry;
 import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
+import org.apache.drill.test.rowSet.RowSetUtilities;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,6 +46,26 @@ public class TestSplunkPlugin extends ClusterTest {
     SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-60d", null);
     config.setEnabled(true);
     pluginRegistry.put(SplunkPluginConfig.NAME, config);
+  }
+
+  @Test
+  public void verifyPluginConfig() throws Exception {
+    String sql = "SELECT SCHEMA_NAME, TYPE FROM INFORMATION_SCHEMA.`SCHEMATA` WHERE TYPE='splunk'\n" +
+      "ORDER BY SCHEMA_NAME";
+
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("SCHEMA_NAME", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("TYPE", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .buildSchema();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow("splunk", "splunk")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
   }
 
   @Test

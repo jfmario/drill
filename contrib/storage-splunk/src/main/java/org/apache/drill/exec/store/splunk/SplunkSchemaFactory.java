@@ -33,6 +33,7 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
   }
 
   @Override
+
   public void registerSchemas(SchemaConfig schemaConfig, SchemaPlus parent) {
     // Get Splunk Indexes
     connection.connect();
@@ -40,8 +41,10 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
 
     for (Index index : indexes.values()) {
       SplunkSchema schema = new SplunkSchema(plugin);
+
       SchemaPlus schemaPlus = parent.add(getName(), schema);
       logger.debug("Registering {}", index.getName());
+      //schemaPlus.add(index.getName(), schema);
     }
   }
 
@@ -62,7 +65,8 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
         return table;
       } else {
         // Register the table
-        return registerTable(name, new DynamicDrillTable(plugin, plugin.getName(), new SplunkScanSpec(plugin.getName(), name, plugin.getConfig())));
+        return registerTable(name, new DynamicDrillTable(plugin, plugin.getName(),
+          new SplunkScanSpec(plugin.getName(), name, plugin.getConfig())));
       }
     }
 

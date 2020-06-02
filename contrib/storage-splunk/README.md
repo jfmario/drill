@@ -26,6 +26,18 @@ Splunk's primary use case is analyzing event logs with a timestamp. As such, dat
   
 With this understood, it is **very** important to put time boundaries on your Splunk queries. The Drill plugin allows you to set default values in the configuration such that every
  query you run will be bounded by these boundaries.  Alternatively, you can set the time boundaries at query time.  In either case, you will achieve the best performance when
+  you are asking Splunk for the smallest amount of data possible.
+  
+  ## Bounding Your Queries
+  When you learn to query Splunk via their interface, the first thing you learn is to bound your queries so that they are looking at the shortest time span possible. When using
+   Drill to query Splunk, it is advisable to do the same thing, and Drill offers two ways to accomplish this: via the configuration and at query time.
+   
+  ### Bounding your Queries at Query Time
+  The easiest way to bound your query is to do so at querytime via special filters in the `WHERE` clause. There are two 
+   
+   
+   
+  https://docs.splunk.com/Documentation/Splunk/8.0.3/SearchReference/SearchTimeModifiers
   
   ### Data Types
   Splunk does not have sophisticated data types and unfortunately does not provide metadata from its query results.  With the exception of the fields below, Drill will interpret
@@ -53,6 +65,7 @@ When you execute a query in Drill for Splunk, the fields you select are pushed d
  * `spl`:  If you just want to send an SPL query to Splunk, this will do that. 
  * `earliestTime`: Overrides the `earliestTime` setting in the configuration. 
  * `latestTime`: Overrides the `latestTime` setting in the configuration. 
+ 
   
 ### Sorting Results
 Due to the nature of Splunk indexes, data will always be returned in reverse chronological order. Thus, sorting is not necessary if that is the desired order.
