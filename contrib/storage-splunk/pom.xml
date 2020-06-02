@@ -75,11 +75,11 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes/org/apache/drill/exec/store/http
+              <outputDirectory>${basedir}/target/classes/org/apache/drill/exec/store/splunk
               </outputDirectory>
               <resources>
                 <resource>
-                  <directory>src/main/java/org/apache/drill/exec/store/http</directory>
+                  <directory>src/main/java/org/apache/drill/exec/store/splunk</directory>
                   <filtering>true</filtering>
                 </resource>
               </resources>

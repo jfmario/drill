@@ -55,5 +55,4 @@ public class SplunkScanSpec {
       .field("indexName", indexName)
       .toString();
   }
-
 }

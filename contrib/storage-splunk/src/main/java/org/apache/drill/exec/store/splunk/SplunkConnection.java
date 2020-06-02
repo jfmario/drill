@@ -49,7 +49,6 @@ public class SplunkConnection {
     this.port = config.getPort();
     service = connect();
     ConfCollection confs = service.getConfs();
-    int x = 4;
   }
 
   /**
