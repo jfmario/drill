@@ -84,13 +84,11 @@ public class SplunkScanBatchCreator implements BatchCreator<SplunkSubScan> {
 
     @Override
     public ManagedReader<SchemaNegotiator> next() {
-
       // Only a single scan (in a single thread)
       if (count++ == 0) {
         return new SplunkBatchReader(config, subScan);
-      } else {
-        return null;
       }
+      return null;
     }
   }
 }

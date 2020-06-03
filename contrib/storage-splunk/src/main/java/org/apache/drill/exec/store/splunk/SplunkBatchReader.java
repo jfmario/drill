@@ -195,12 +195,11 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   }
 
   private void populateWriterArray() {
-    columnWriters = new ArrayList<>();
-
     // Case for empty result set
     if (firstRow == null || firstRow.length == 0) {
       return;
     }
+    columnWriters = new ArrayList<>();
 
     int colPosition = 0;
     for (String value : firstRow) {
