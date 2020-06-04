@@ -96,17 +96,8 @@ public class SplunkPushDownListener implements FilterPushDownListener {
       }
     }
 
-    /**
-     * Only accept equality conditions.
-     */
     private ColRelOpConstNode acceptRelOp(ColRelOpConstNode relOp) {
-      switch (relOp.op) {
-        case EQ:
-          return acceptColumn(relOp.colName) &&
-            acceptType(relOp.value.type) ? relOp : null;
-        default:
-          return null;
-      }
+      return acceptColumn(relOp.colName) && acceptType(relOp.value.type) ? relOp : null;
     }
 
     /**

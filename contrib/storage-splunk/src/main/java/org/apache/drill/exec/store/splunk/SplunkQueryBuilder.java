@@ -135,6 +135,7 @@ public class SplunkQueryBuilder {
    * Processes the filters for a Splunk query
    * @param filters A HashMap of filters
    */
+  // TODO Replace with ArrayList of Filter objects
   public void addFilters(Map<String, ExprNode.ColRelOpConstNode> filters) {
     if (filters == null) {
       return;

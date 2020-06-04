@@ -92,6 +92,77 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
+  public void testGTQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.GT, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
+
+    builder.addField("field1");
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main field1>5 | fields field1 | table field1", query);
+  }
+
+  @Test
+  public void testGEQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.GE, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
+
+    builder.addField("field1");
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main field1>=5 | fields field1 | table field1", query);
+  }
+
+  @Test
+  public void testLEQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.LE, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
+
+    builder.addField("field1");
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main field1<=5 | fields field1 | table field1", query);
+  }
+
+  @Test
+  public void testLTQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.LT, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
+
+    builder.addField("field1");
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main field1<5 | fields field1 | table field1", query);
+  }
+
+  @Test
+  public void testMultipleComparisonQuery() throws Exception {
+    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
+
+    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.LT, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
+    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.GT, new ConstantHolder(TypeProtos.MinorType.INT, 10)));
+
+    builder.addField("field1");
+    builder.addFilters(filters);
+
+    String query = builder.build();
+    assertEquals("search index=main  field1>10 field1<5 | fields field1 | table field1", query);
+  }
+
+  @Test
   public void testStarAndSourcetypeQuery() throws Exception {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
