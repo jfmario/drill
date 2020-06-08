@@ -24,6 +24,7 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.drill.common.AutoCloseables;
 import org.apache.drill.common.exceptions.CustomErrorContext;
+import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.expression.SchemaPath;
 import org.apache.drill.common.types.TypeProtos.MinorType;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
@@ -255,9 +256,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     String latestTime = null;
     Map<String, ExprNode.ColRelOpConstNode> filters = subScan.getFilters();
 
-    SplunkQueryBuilder builder = new SplunkQueryBuilder(subScanSpec.getIndexName());
-
-    // Get the index from the table
     exportArgs = new JobExportArgs();
 
     // Set to normal search mode
@@ -294,8 +292,25 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       latestTime = config.getLatestTime();
     }
 
+    logger.debug("Query time bounds: {} and {}", earliestTime, latestTime);
     exportArgs.setEarliestTime(earliestTime);
     exportArgs.setLatestTime(latestTime);
+
+    // Special case: If the user wishes to send arbitrary SPL to Splunk, the user can use the "SPL"
+    // Index and spl filter
+    if (subScanSpec.getIndexName().equalsIgnoreCase("spl")) {
+      query = filters.get("spl").value.value.toString();
+      if (Strings.isNullOrEmpty(query)) {
+        throw UserException
+          .validationError()
+          .message("SPL cannot be empty when querying spl table.")
+          .addContext(errorContext)
+          .build(logger);
+      }
+      return query;
+    }
+
+    SplunkQueryBuilder builder = new SplunkQueryBuilder(subScanSpec.getIndexName());
 
     // Set the sourcetype
     if (filters != null && filters.containsKey("sourcetype")) {

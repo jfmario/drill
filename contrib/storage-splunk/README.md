@@ -92,7 +92,14 @@ When you execute a query in Drill for Splunk, the fields you select are pushed d
  * `spl`:  If you just want to send an SPL query to Splunk, this will do that. 
  * `earliestTime`: Overrides the `earliestTime` setting in the configuration. 
  * `latestTime`: Overrides the `latestTime` setting in the configuration. 
- 
   
 ### Sorting Results
 Due to the nature of Splunk indexes, data will always be returned in reverse chronological order. Thus, sorting is not necessary if that is the desired order.
+
+## Sending Arbitrary SPL to Splunk
+There is a special table called `spl` which you can use to send arbitrary queries to Splunk. If you use this table, you must include a query in the `spl` filter as shown below:
+```sql
+SELECT *
+FROM splunk.spl
+WHERE spl='<your SPL query'
+```

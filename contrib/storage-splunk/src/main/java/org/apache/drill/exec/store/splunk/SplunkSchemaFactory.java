@@ -20,6 +20,7 @@ import java.util.Set;
 public class SplunkSchemaFactory extends AbstractSchemaFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(SplunkSchemaFactory.class);
+  private static final String SPL_TABLE_NAME = "spl";
   private final SplunkStoragePlugin plugin;
   private final EntityCollection<Index> indexes;
 
@@ -87,6 +88,11 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
     }
 
     private void registerIndexes() {
+      // Add default "spl" table to index list.
+      registerTable(SPL_TABLE_NAME, new DynamicDrillTable(plugin, plugin.getName(),
+        new SplunkScanSpec(plugin.getName(), SPL_TABLE_NAME, plugin.getConfig())));
+
+      // Add all other indexes
       for (String indexName : indexes.keySet()) {
         logger.debug("Registering {}", indexName);
         registerTable(indexName, new DynamicDrillTable(plugin, plugin.getName(),

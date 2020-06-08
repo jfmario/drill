@@ -145,6 +145,14 @@ public class TestSplunkPlugin extends ClusterTest {
   }
 
   @Test
+  public void testGreaterThanFilterQuery() throws Exception {
+    String sql = "SELECT clientip, file, bytes FROM splunk.main WHERE bytes > 1000 ORDER BY bytes ASC LIMIT 10";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+
+
+  @Test
   public void testSerDe() throws Exception {
     String sql = "SELECT COUNT(*) FROM splunk.main WHERE sourcetype='access_combined_wcookie' AND file='cart.do' AND clientip='217.15.20.146'";
     String plan = queryBuilder().sql(sql).explainJson();
