@@ -51,7 +51,6 @@ public class SplunkSchemaFactory extends AbstractSchemaFactory {
       super(Collections.emptyList(), plugin.getName());
       this.plugin = plugin;
       registerIndexes();
-
     }
 
     @Override

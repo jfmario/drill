@@ -71,10 +71,7 @@ public class TestSplunkPlugin extends ClusterTest {
   @Test
   public void verifyIndexes() throws Exception {
     String sql = "SHOW TABLES IN `splunk`";
-
     RowSet results = client.queryBuilder().sql(sql).rowSet();
-    results.print();
-
     TupleMetadata expectedSchema = new SchemaBuilder()
       .add("TABLE_SCHEMA", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
       .add("TABLE_NAME", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
@@ -101,6 +98,34 @@ public class TestSplunkPlugin extends ClusterTest {
     RowSet results = client.queryBuilder().sql(sql).rowSet();
     results.print();
   }
+
+  @Test
+  public void testRawSPLQuery() throws Exception {
+    String sql = "select * from splunk.spl WHERE spl = 'index=_internal earliest=-60d latest=now | fieldsummary'";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+
+    results.print();
+
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("field", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("count", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("distinct_count", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("is_exact", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("max", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("mean", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("min", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("numeric_count", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("stdev", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("values", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .buildSchema();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow("index", "0", "0", "1", null, null, null, "0", null, "[]")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
+  }
+
 
   @Test
   public void testExplictFieldsQuery() throws Exception {

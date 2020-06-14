@@ -299,13 +299,15 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Special case: If the user wishes to send arbitrary SPL to Splunk, the user can use the "SPL"
     // Index and spl filter
     if (subScanSpec.getIndexName().equalsIgnoreCase("spl")) {
-      query = filters.get("spl").value.value.toString();
-      if (Strings.isNullOrEmpty(query)) {
+      if (filters == null || filters.get("spl") == null) {
         throw UserException
           .validationError()
           .message("SPL cannot be empty when querying spl table.")
           .addContext(errorContext)
           .build(logger);
+      } else if (!query.startsWith("search")) {
+        query = filters.get("spl").value.value.toString();
+        query = "search " + query;
       }
       return query;
     }
