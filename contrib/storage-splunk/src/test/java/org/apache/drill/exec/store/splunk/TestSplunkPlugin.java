@@ -19,6 +19,7 @@ package org.apache.drill.exec.store.splunk;
 
 import org.apache.drill.categories.SlowTest;
 import org.apache.drill.categories.SplunkStorageTest;
+import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.rowSet.RowSet;
 import org.apache.drill.exec.physical.rowSet.RowSetBuilder;
@@ -33,6 +34,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 //@Ignore("These tests require a running Splunk instance.")
 @Category({SlowTest.class, SplunkStorageTest.class})
@@ -43,7 +46,7 @@ public class TestSplunkPlugin extends ClusterTest {
     startCluster(ClusterFixture.builder(dirTestWatcher));
 
     StoragePluginRegistry pluginRegistry = cluster.drillbit().getContext().getStorage();
-    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-60d", null);
+    SplunkPluginConfig config = new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "1", "now");
     config.setEnabled(true);
     pluginRegistry.put(SplunkPluginConfig.NAME, config);
   }
@@ -54,7 +57,6 @@ public class TestSplunkPlugin extends ClusterTest {
       "ORDER BY SCHEMA_NAME";
 
     RowSet results = client.queryBuilder().sql(sql).rowSet();
-    results.print();
 
     TupleMetadata expectedSchema = new SchemaBuilder()
       .add("SCHEMA_NAME", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
@@ -101,7 +103,7 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testRawSPLQuery() throws Exception {
-    String sql = "select * from splunk.spl WHERE spl = 'index=_internal earliest=-60d latest=now | fieldsummary'";
+    String sql = "SELECT * FROM splunk.spl WHERE spl = 'search index=_internal earliest=1 latest=now | fieldsummary'";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
 
     results.print();
@@ -164,6 +166,12 @@ public class TestSplunkPlugin extends ClusterTest {
   }
 
   @Test
+  public void testMultipleEqualityFilterOnSameFieldQuery() throws Exception {
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE clientip='217.15.20.146' AND clientip='176.212.0.44'";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+  }
+
+  @Test
   public void testFilterOnUnProjectedColumnQuery() throws Exception {
     String sql = "SELECT _time, clientip, host FROM splunk.main WHERE file='cart.do'";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
@@ -171,11 +179,38 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testGreaterThanFilterQuery() throws Exception {
-    String sql = "SELECT clientip, file, bytes FROM splunk.main WHERE bytes > 1000 ORDER BY bytes ASC LIMIT 10";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    String sql = "SELECT clientip, file, bytes FROM splunk.main WHERE bytes > 40000";
+    client.testBuilder()
+      .sqlQuery(sql)
+      .ordered()
+      .expectsNumRecords(235)
+      .go();
   }
 
 
+  @Test
+  public void testArbitrarySPL() throws Exception {
+    String sql = "SELECT * FROM splunk.spl WHERE spl='|noop| makeresults | eval field1 = \"abc def ghi jkl mno pqr stu vwx yz\" | makemv field1 | mvexpand field1 | eval multiValueField = \"cat dog bird\" | makemv multiValueField' LIMIT 10\n";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+
+    /*client.testBuilder()
+      .sqlQuery(sql)
+      .ordered()
+      .expectsNumRecords(235)
+      .go();*/
+  }
+
+  @Test
+  public void testSPLQueryWithMissingSPL() throws Exception {
+    String sql = "SELECT * FROM splunk.spl";
+    try {
+      client.queryBuilder().sql(sql).rowSet();
+      fail();
+    } catch (UserException e) {
+      assertTrue(e.getMessage().contains("SPL cannot be empty when querying spl table"));
+    }
+  }
 
   @Test
   public void testSerDe() throws Exception {

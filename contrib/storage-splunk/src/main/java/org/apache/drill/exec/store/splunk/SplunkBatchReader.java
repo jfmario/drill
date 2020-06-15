@@ -34,6 +34,7 @@ import org.apache.drill.exec.physical.resultSet.RowSetLoader;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.store.base.filter.ExprNode;
+import org.apache.drill.exec.vector.ValueVector;
 import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.apache.drill.shaded.guava.com.google.common.base.Stopwatch;
 import org.apache.drill.shaded.guava.com.google.common.base.Strings;
@@ -106,6 +107,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     this.csvSettings = new CsvParserSettings();
     csvSettings.setLineSeparatorDetectionEnabled(true);
+    csvSettings.setMaxCharsPerColumn(ValueVector.MAX_BUFFER_SIZE);
   }
 
   @Override
@@ -117,6 +119,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     String queryString = buildQueryString();
 
+    logger.debug("Query Sent to Splunk: {}", queryString);
     // Execute the query
     searchResults = splunkService.export(queryString, exportArgs);
     logger.debug("Time to execute query: {} milliseconds", timer.elapsed().getNano() / 100000);
@@ -305,11 +308,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
           .message("SPL cannot be empty when querying spl table.")
           .addContext(errorContext)
           .build(logger);
-      } else if (!query.startsWith("search")) {
-        query = filters.get("spl").value.value.toString();
-        query = "search " + query;
       }
-      return query;
+      return filters.get("spl").value.value.toString();
     }
 
     SplunkQueryBuilder builder = new SplunkQueryBuilder(subScanSpec.getIndexName());
@@ -334,8 +334,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       builder.addLimit(subScan.getMaxRecords());
     }
     query = builder.build();
-
-    logger.debug("Sending query to Splunk: {}", query);
     return query;
   }
 
