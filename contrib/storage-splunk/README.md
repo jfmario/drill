@@ -30,7 +30,7 @@ With this understood, it is **very** important to put time boundaries on your Sp
   
 ## Understanding Drill's Data Model with Splunk
 Drill treats Splunk indexes as tables. Splunk's access model does not restrict to the catalog, but does restrict access to the actual data. It is therefore possible that you can
- see the names of indexes to which you do not have access.
+ see the names of indexes to which you do not have access.  You can view the list of available indexes with a `SHOW TABLES IN splunk` query.
   
 ```
 apache drill> SHOW TABLES IN splunk;
@@ -65,6 +65,15 @@ FROM splunk.<index>
    
    You can use any of the time formats specified in the Splunk documentation here:   
   https://docs.splunk.com/Documentation/Splunk/8.0.3/SearchReference/SearchTimeModifiers
+  
+  So if you wanted to see your data for the last 15 minutes, you could execute the following query:
+
+```sql
+SELECT <fields>
+FROM splunk.<index>
+WHERE earliestTime='-15m' AND latestTime='now'
+```
+The variables set in a query override the defaults from the configuration. 
   
   ### Data Types
   Splunk does not have sophisticated data types and unfortunately does not provide metadata from its query results.  With the exception of the fields below, Drill will interpret
@@ -103,3 +112,20 @@ SELECT *
 FROM splunk.spl
 WHERE spl='<your SPL query'
 ```
+
+# Testing the Plugin
+This plugin includes a series of unit tests in the `src/test/` directory, however you will need an active Splunk installation to run them.  Since Splunk is not an open source
+ project, nor is available as a Docker container, simply follow the instructions below to test Splunk with Drill.
+ 
+ ###  Step 1: Get Splunk
+ From Splunk's website, simply download and install the free version here: https://www.splunk.com/en_us/download/splunk-enterprise.html
+ 
+ Once you've downloaded Splunk, start it up, and make sure everything is working properly. 
+ 
+ ### Step 2:  Add Data
+ Next, go here: https://docs.splunk.com/Documentation/Splunk/7.0.3/SearchTutorial/Systemrequirements and download the dummy datasets that Splunk provides. Once you've downloaded
+  this data, have Splunk index this data and you're ready to go from the Splunk end. 
+  
+## Known Limitations
+* At present, Drill will not interpret Splunk multifields as anything other than a String. If there is interest, this feature can be implemented.
+ 

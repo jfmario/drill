@@ -106,8 +106,6 @@ public class TestSplunkPlugin extends ClusterTest {
     String sql = "SELECT * FROM splunk.spl WHERE spl = 'search index=_internal earliest=1 latest=now | fieldsummary'";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
 
-    results.print();
-
     TupleMetadata expectedSchema = new SchemaBuilder()
       .add("field", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
       .add("count", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
@@ -127,7 +125,6 @@ public class TestSplunkPlugin extends ClusterTest {
 
     RowSetUtilities.verify(expected, results);
   }
-
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
@@ -190,15 +187,30 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testArbitrarySPL() throws Exception {
-    String sql = "SELECT * FROM splunk.spl WHERE spl='|noop| makeresults | eval field1 = \"abc def ghi jkl mno pqr stu vwx yz\" | makemv field1 | mvexpand field1 | eval multiValueField = \"cat dog bird\" | makemv multiValueField' LIMIT 10\n";
+    String sql = "SELECT field1, _mkv_child, multiValueField FROM splunk.spl WHERE spl='|noop| makeresults | eval field1 = \"abc def ghi jkl mno pqr stu vwx yz\" | makemv field1 | mvexpand " +
+      "field1 | eval " +
+      "multiValueField = \"cat dog bird\" | makemv multiValueField' LIMIT 10\n";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
-    results.print();
 
-    /*client.testBuilder()
-      .sqlQuery(sql)
-      .ordered()
-      .expectsNumRecords(235)
-      .go();*/
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("field1", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("_mkv_child", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("multiValueField", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .build();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow("abc", "0", "cat dog bird")
+      .addRow("def", "1", "cat dog bird")
+      .addRow("ghi", "2", "cat dog bird")
+      .addRow("jkl", "3", "cat dog bird")
+      .addRow("mno", "4", "cat dog bird")
+      .addRow("pqr", "5", "cat dog bird")
+      .addRow("stu", "6", "cat dog bird")
+      .addRow("vwx", "7", "cat dog bird")
+      .addRow("yz", "8", "cat dog bird")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
   }
 
   @Test

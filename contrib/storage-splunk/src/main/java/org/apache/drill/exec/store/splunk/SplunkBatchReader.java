@@ -20,6 +20,7 @@ package org.apache.drill.exec.store.splunk;
 
 import com.splunk.JobExportArgs;
 import com.splunk.Service;
+import com.univocity.parsers.common.processor.RowListProcessor;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.drill.common.AutoCloseables;
@@ -77,7 +78,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    * These are special fields that alter the queries sent to Splunk.
    */
   private enum SPECIAL_FIELDS {
-
     /**
      * The sourcetype of a query. Specifying the sourcetype can improve query performance.
      */
@@ -87,15 +87,14 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
      */
     spl,
     /**
-     * The earliest time boundary of a query
+     * The earliest time boundary of a query, overwrites config variable
      */
     earliestTime,
     /**
-     * The latest time bound of a query
+     * The latest time bound of a query, overwrites config variable
      */
     latestTime
   }
-
 
   public SplunkBatchReader(SplunkPluginConfig config, SplunkSubScan subScan) {
     this.config = config;
@@ -107,6 +106,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     this.csvSettings = new CsvParserSettings();
     csvSettings.setLineSeparatorDetectionEnabled(true);
+    RowListProcessor rowProcessor = new RowListProcessor();
+    csvSettings.setProcessor(rowProcessor);
     csvSettings.setMaxCharsPerColumn(ValueVector.MAX_BUFFER_SIZE);
   }
 
@@ -129,8 +130,8 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     the data is not consistent, as some fields are quoted, some are not.
     */
     this.csvReader = new CsvParser(csvSettings);
-    csvReader.beginParsing(searchResults);
-
+    logger.debug("Time to open CSV Parser: {} milliseconds", timer.elapsed().getNano() / 100000);
+    csvReader.beginParsing(searchResults, "utf-8");
     logger.debug("Time to open input stream: {} milliseconds", timer.elapsed().getNano() / 100000);
 
     // Build the Schema
@@ -142,7 +143,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Create ScalarWriters
     rowWriter = resultLoader.writer();
     populateWriterArray();
-    timer.stop();
     logger.debug("Completed open function in {} milliseconds", timer.elapsed().getNano() / 100000);
     return true;
   }
@@ -159,6 +159,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
   @Override
   public void close() {
+    timer.stop();
     if (searchResults != null) {
       AutoCloseables.closeSilently(searchResults);
       searchResults = null;
@@ -254,7 +255,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   }
 
   private String buildQueryString () {
-    String query = "search ";
     String earliestTime = null;
     String latestTime = null;
     Map<String, ExprNode.ColRelOpConstNode> filters = subScan.getFilters();
@@ -283,7 +283,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     if (filters != null && filters.containsKey(LATEST_TIME_COLUMN)) {
       latestTime = filters.get(LATEST_TIME_COLUMN).value.value.toString();
 
-      // Remove from map
+      // Remove from map so they are not pushed down into the query
       filters.remove(LATEST_TIME_COLUMN);
     }
 
@@ -333,8 +333,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     if (subScan.getMaxRecords() > 0) {
       builder.addLimit(subScan.getMaxRecords());
     }
-    query = builder.build();
-    return query;
+    return builder.build();
   }
 
   public abstract static class SplunkColumnWriter {
