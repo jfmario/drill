@@ -239,19 +239,18 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    * @return true if it is a star query, false if not.
    */
   private boolean isStarQuery() {
-    boolean isStarQuery = false;
     List specialFields = Arrays.asList(SPECIAL_FIELDS.values());
 
     for (SchemaPath path: projectedColumns) {
       if (path.nameEquals("**")) {
-        isStarQuery = true;
+        return true;
       } else if (specialFields.contains(path.getAsNamePart())) {
-        isStarQuery = true;
+        return true;
       } else {
         return false;
       }
     }
-    return isStarQuery;
+    return false;
   }
 
   private String buildQueryString () {

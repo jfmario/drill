@@ -88,6 +88,7 @@ public class TestSplunkPlugin extends ClusterTest {
       .addRow("splunk", "_introspection")
       .addRow("splunk", "main")
       .addRow("splunk", "history")
+      .addRow("splunk", "spl")
       .addRow("splunk", "_telemetry")
       .build();
 
@@ -126,40 +127,102 @@ public class TestSplunkPlugin extends ClusterTest {
     RowSetUtilities.verify(expected, results);
   }
 
+  /*@Test
+  public void testMultiField() throws Exception {
+    /*| makeresults
+| eval _raw="{\"pc\":{\"label\":\"PC\",\"count\":24,\"peak24\":12},\"ps3\":
+{\"label\":\"PS3\",\"count\":51,\"peak24\":10},\"xbox\":
+{\"label\":\"XBOX360\",\"count\":40,\"peak24\":11},\"xone\":
+{\"label\":\"XBOXONE\",\"count\":105,\"peak24\":99},\"ps4\":
+{\"label\":\"PS4\",\"count\":200,\"peak24\":80}}"
+
+  }*/
+
+
+
   @Test
   public void testExplictFieldsQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 5";
+
+    client.testBuilder()
+      .sqlQuery(sql)
+      .unOrdered()
+      .baselineColumns("_time", "clientip", "file", "host")
+      .expectsNumRecords(5)
+      .go();
   }
 
   @Test
   public void testExplictFieldsWithLimitQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main LIMIT 10";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    client.testBuilder()
+      .sqlQuery(sql)
+      .unOrdered()
+      .baselineColumns( "_time", "clientip", "file", "host")
+      .expectsNumRecords(10)
+      .go();
   }
 
   @Test
   public void testExplictFieldsWithSourcetype() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE sourcetype='access_combined_wcookie' LIMIT 10";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    client.testBuilder()
+      .sqlQuery(sql)
+      .unOrdered()
+      .baselineColumns( "_time", "clientip", "file", "host")
+      .expectsNumRecords(10)
+      .go();
   }
 
   @Test
   public void testExplictFieldsWithOneFieldLimitQuery() throws Exception {
     String sql = "SELECT clientip FROM splunk.main LIMIT 2";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("clientip", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .buildSchema();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow("194.215.205.19")
+      .addRow("212.27.63.151")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
   }
 
   @Test
   public void testSingleEqualityFilterQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE file='cart.do'";
+    String sql = "SELECT linecount, clientip, file, host FROM splunk.main WHERE clientip='87.143.22.202'";
     RowSet results = client.queryBuilder().sql(sql).rowSet();
+
+    TupleMetadata expectedSchema = new SchemaBuilder()
+      .add("linecount", TypeProtos.MinorType.INT, TypeProtos.DataMode.OPTIONAL)
+      .add("clientip", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("file", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .add("host", TypeProtos.MinorType.VARCHAR, TypeProtos.DataMode.OPTIONAL)
+      .buildSchema();
+
+    RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
+      .addRow(1, "87.143.22.202", "userlist", "web_application")
+      .addRow(1, "87.143.22.202", "userlist", "web_application")
+      .addRow(1, "87.143.22.202", "userlist", "web_application")
+      .addRow(1, "87.143.22.202", "userlist", "web_application")
+      .addRow(1, "87.143.22.202", "userlist", "web_application")
+      .build();
+
+    RowSetUtilities.verify(expected, results);
   }
 
   @Test
   public void testMultipleEqualityFilterQuery() throws Exception {
     String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE file='cart.do' AND clientip='217.15.20.146'";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    client.testBuilder()
+      .sqlQuery(sql)
+      .ordered()
+      .expectsNumRecords(164)
+      .go();
   }
 
   @Test
@@ -170,8 +233,14 @@ public class TestSplunkPlugin extends ClusterTest {
 
   @Test
   public void testFilterOnUnProjectedColumnQuery() throws Exception {
-    String sql = "SELECT _time, clientip, host FROM splunk.main WHERE file='cart.do'";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    //String sql = "SELECT _time, file, host FROM splunk.main WHERE clientip='87.143.22.202'";
+
+    String sql = "SELECT * FROM splunk.main WHERE clientip='87.143.22.202'";
+    client.testBuilder()
+      .sqlQuery(sql)
+      .ordered()
+      .expectsNumRecords(164)
+      .go();
   }
 
   @Test
