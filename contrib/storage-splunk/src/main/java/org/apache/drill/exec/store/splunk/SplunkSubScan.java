@@ -28,6 +28,7 @@ import org.apache.drill.exec.physical.base.AbstractBase;
 import org.apache.drill.exec.physical.base.PhysicalOperator;
 import org.apache.drill.exec.physical.base.PhysicalVisitor;
 import org.apache.drill.exec.physical.base.SubScan;
+import org.apache.drill.exec.proto.UserBitShared;
 import org.apache.drill.exec.store.base.filter.ExprNode;
 import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableSet;
 
@@ -104,8 +105,7 @@ public class SplunkSubScan extends AbstractBase implements SubScan {
   @Override
   @JsonIgnore
   public int getOperatorType() {
-    //return CoreOperatorType.HTTP_SUB_SCAN_VALUE;  // TODO Add to protobufs
-    return 99;
+    return UserBitShared.CoreOperatorType.SPLUNK_SUB_SCAN_VALUE;
   }
 
   @Override
