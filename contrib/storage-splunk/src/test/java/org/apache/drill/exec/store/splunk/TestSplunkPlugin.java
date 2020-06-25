@@ -30,6 +30,7 @@ import org.apache.drill.test.ClusterFixture;
 import org.apache.drill.test.ClusterTest;
 import org.apache.drill.test.rowSet.RowSetUtilities;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-//@Ignore("These tests require a running Splunk instance.")
+@Ignore("These tests require a running Splunk instance.")
 @Category({SlowTest.class, SplunkStorageTest.class})
 public class TestSplunkPlugin extends ClusterTest {
 
@@ -98,8 +99,17 @@ public class TestSplunkPlugin extends ClusterTest {
   @Test
   public void testStarQuery() throws Exception {
     String sql = "SELECT * FROM splunk.main LIMIT 5";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
-    results.print();
+    client.testBuilder()
+      .sqlQuery(sql)
+      .baselineColumns("COMMAND",  "Duration", "JSESSIONID", "PWD", "TTY", "Time", "Type", "USER", "action",
+        "bytes", "categoryId", "clientip", "cookie", "date_hour", "date_mday", "date_minute", "date_month",
+        "date_second", "date_wday", "date_year", "date_zone", "eventtype", "file", "host", "ident", "index",
+        "items", "linecount", "method", "msg", "other", "productId", "punct", "q", "referer", "referer_domain",
+        "req_time", "root", "source", "sourcetype", "splunk_server", "splunk_server_group", "start", "status", "t",
+        "timeendpos", "timestartpos", "uid", "uri", "uri_domain", "uri_path", "uri_query", "useragent", "version", "_bkt",
+        "_cd", "_eventtype_color", "_indextime", "_kv", "_raw", "_si", "_sourcetype", "_time")
+      .expectsNumRecords(5)
+      .go();
   }
 
   @Test
@@ -126,19 +136,6 @@ public class TestSplunkPlugin extends ClusterTest {
 
     RowSetUtilities.verify(expected, results);
   }
-
-  /*@Test
-  public void testMultiField() throws Exception {
-    /*| makeresults
-| eval _raw="{\"pc\":{\"label\":\"PC\",\"count\":24,\"peak24\":12},\"ps3\":
-{\"label\":\"PS3\",\"count\":51,\"peak24\":10},\"xbox\":
-{\"label\":\"XBOX360\",\"count\":40,\"peak24\":11},\"xone\":
-{\"label\":\"XBOXONE\",\"count\":105,\"peak24\":99},\"ps4\":
-{\"label\":\"PS4\",\"count\":200,\"peak24\":80}}"
-
-  }*/
-
-
 
   @Test
   public void testExplictFieldsQuery() throws Exception {
@@ -185,8 +182,8 @@ public class TestSplunkPlugin extends ClusterTest {
       .buildSchema();
 
     RowSet expected = new RowSetBuilder(client.allocator(), expectedSchema)
-      .addRow("194.215.205.19")
-      .addRow("212.27.63.151")
+      .addRow("192.188.106.240")
+      .addRow("212.235.92.150")
       .build();
 
     RowSetUtilities.verify(expected, results);
@@ -226,20 +223,12 @@ public class TestSplunkPlugin extends ClusterTest {
   }
 
   @Test
-  public void testMultipleEqualityFilterOnSameFieldQuery() throws Exception {
-    String sql = "SELECT _time, clientip, file, host FROM splunk.main WHERE clientip='217.15.20.146' AND clientip='176.212.0.44'";
-    RowSet results = client.queryBuilder().sql(sql).rowSet();
-  }
-
-  @Test
   public void testFilterOnUnProjectedColumnQuery() throws Exception {
-    //String sql = "SELECT _time, file, host FROM splunk.main WHERE clientip='87.143.22.202'";
-
-    String sql = "SELECT * FROM splunk.main WHERE clientip='87.143.22.202'";
+    String sql = "SELECT _time, file, host FROM splunk.main WHERE clientip='87.143.22.202'";
     client.testBuilder()
       .sqlQuery(sql)
       .ordered()
-      .expectsNumRecords(164)
+      .expectsNumRecords(5)
       .go();
   }
 
@@ -252,7 +241,6 @@ public class TestSplunkPlugin extends ClusterTest {
       .expectsNumRecords(235)
       .go();
   }
-
 
   @Test
   public void testArbitrarySPL() throws Exception {

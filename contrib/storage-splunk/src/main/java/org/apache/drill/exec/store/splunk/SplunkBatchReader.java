@@ -74,27 +74,6 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   private RowSetLoader rowWriter;
   private Stopwatch timer;
 
-  /**
-   * These are special fields that alter the queries sent to Splunk.
-   */
-  private enum SPECIAL_FIELDS {
-    /**
-     * The sourcetype of a query. Specifying the sourcetype can improve query performance.
-     */
-    sourcetype,
-    /**
-     * Used to send raw SPL to Splunk
-     */
-    spl,
-    /**
-     * The earliest time boundary of a query, overwrites config variable
-     */
-    earliestTime,
-    /**
-     * The latest time bound of a query, overwrites config variable
-     */
-    latestTime
-  }
 
   public SplunkBatchReader(SplunkPluginConfig config, SplunkSubScan subScan) {
     this.config = config;
@@ -137,7 +116,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
     // Build the Schema
     builder = new SchemaBuilder();
     TupleMetadata drillSchema = buildSchema();
-    negotiator.tableSchema(drillSchema, true);
+    negotiator.tableSchema(drillSchema, false);
     ResultSetLoader resultLoader = negotiator.build();
 
     // Create ScalarWriters
@@ -239,19 +218,27 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
    * @return true if it is a star query, false if not.
    */
   private boolean isStarQuery() {
-    List specialFields = Arrays.asList(SPECIAL_FIELDS.values());
+    List<SplunkUtils.SPECIAL_FIELDS> specialFields = Arrays.asList(SplunkUtils.SPECIAL_FIELDS.values());
 
     for (SchemaPath path: projectedColumns) {
       if (path.nameEquals("**")) {
         return true;
-      } else if (specialFields.contains(path.getAsNamePart())) {
-        return true;
       } else {
-        return false;
+        return specialFields.contains(path.getAsNamePart());
       }
     }
     return false;
   }
+
+  /**
+   * Determines whether a field is a Splunk multifield.
+   * @param fieldValue The field to be tested
+   * @return True if a multifield, false if not.
+   */
+  protected static boolean isMultiField(String fieldValue) {
+    return (fieldValue.startsWith("{") && fieldValue.endsWith("}"));
+  }
+
 
   private String buildQueryString () {
     String earliestTime = null;
@@ -339,11 +326,13 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
 
     final String colName;
     ScalarWriter columnWriter;
+    RowSetLoader rowWriter;
     int columnIndex;
 
-    public SplunkColumnWriter(String colName, ScalarWriter writer, int columnIndex) {
+    public SplunkColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
       this.colName = colName;
-      this.columnWriter = writer;
+      this.rowWriter = rowWriter;
+      this.columnWriter = rowWriter.scalar(colName);
       this.columnIndex = columnIndex;
     }
 
@@ -353,7 +342,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   public static class StringColumnWriter extends SplunkColumnWriter {
 
     StringColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
-      super(colName, rowWriter.scalar(colName), columnIndex);
+      super(colName, rowWriter, columnIndex);
     }
 
     @Override
@@ -361,7 +350,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
       String value = record[columnIndex];
       if (Strings.isNullOrEmpty(value)) {
         columnWriter.setNull();
-      } else {
+      }  else {
         columnWriter.setString(value);
       }
     }
@@ -370,7 +359,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   public static class IntColumnWriter extends SplunkColumnWriter {
 
     IntColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
-      super(colName, rowWriter.scalar(colName), columnIndex);
+      super(colName, rowWriter, columnIndex);
     }
 
     @Override
@@ -386,7 +375,7 @@ public class SplunkBatchReader implements ManagedReader<SchemaNegotiator> {
   public static class TimestampColumnWriter extends SplunkColumnWriter {
 
     TimestampColumnWriter(String colName, RowSetLoader rowWriter, int columnIndex) {
-      super(colName, rowWriter.scalar(colName), columnIndex);
+      super(colName, rowWriter, columnIndex);
     }
 
     @Override

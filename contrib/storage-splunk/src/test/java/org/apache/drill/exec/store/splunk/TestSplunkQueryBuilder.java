@@ -32,14 +32,14 @@ import static org.junit.Assert.assertEquals;
 public class TestSplunkQueryBuilder {
 
   @Test
-  public void testSimpleQuery() throws Exception {
+  public void testSimpleQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     String query = builder.build();
     assertEquals("search index=main | table *", query);
   }
 
   @Test
-  public void testAddSingleFieldQuery() throws Exception {
+  public void testAddSingleFieldQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addField("field1");
     String query = builder.build();
@@ -47,7 +47,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testAddMultipleFieldQuery() throws Exception {
+  public void testAddMultipleFieldQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addField("field1");
     builder.addField("field2");
@@ -57,7 +57,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testFieldsAndFiltersQuery() throws Exception {
+  public void testFieldsAndFiltersQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -74,7 +74,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testFieldsAndSourcetypeQuery() throws Exception {
+  public void testFieldsAndSourcetypeQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -92,7 +92,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testGTQuery() throws Exception {
+  public void testGTQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -106,7 +106,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testGEQuery() throws Exception {
+  public void testGEQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -120,7 +120,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testLEQuery() throws Exception {
+  public void testLEQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -134,7 +134,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testLTQuery() throws Exception {
+  public void testLTQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -148,22 +148,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testMultipleComparisonQuery() throws Exception {
-    SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
-
-    Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
-    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.LT, new ConstantHolder(TypeProtos.MinorType.INT, 5)));
-    filters.put("field1", new ExprNode.ColRelOpConstNode("field1", RelOp.GT, new ConstantHolder(TypeProtos.MinorType.INT, 10)));
-
-    builder.addField("field1");
-    builder.addFilters(filters);
-
-    String query = builder.build();
-    assertEquals("search index=main  field1>10 field1<5 | fields field1 | table field1", query);
-  }
-
-  @Test
-  public void testStarAndSourcetypeQuery() throws Exception {
+  public void testStarAndSourcetypeQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
 
     Map<String, ExprNode.ColRelOpConstNode> filters = new HashMap<>();
@@ -181,22 +166,22 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testLimitQuery() throws Exception {
+  public void testLimitQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addLimit(5);
     String query = builder.build();
-    assertEquals("search index=main | table * | head 5", query);
+    assertEquals("search index=main | head 5 | table *", query);
   }
 
   @Test
-  public void testAddSingleSourcetypeQuery() throws Exception {
+  public void testAddSingleSourcetypeQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addSourceType("access_combined_wcookie");
     String query = builder.build();
     assertEquals("search index=main sourcetype=\"access_combined_wcookie\" | table *", query);
   }
   @Test
-  public void testSingleFilterQuery() throws Exception {
+  public void testSingleFilterQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addFilter("field1", "value1", SplunkQueryBuilder.EQUAL_OPERATOR);
     String query = builder.build();
@@ -204,7 +189,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testMultipleFilterQuery() throws Exception {
+  public void testMultipleFilterQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addFilter("field1", "value1", SplunkQueryBuilder.EQUAL_OPERATOR);
     builder.addFilter("field2", "value2", SplunkQueryBuilder.EQUAL_OPERATOR);
@@ -214,7 +199,7 @@ public class TestSplunkQueryBuilder {
   }
 
   @Test
-  public void testAddMultipleSourcetypeQuery() throws Exception {
+  public void testAddMultipleSourcetypeQuery() {
     SplunkQueryBuilder builder = new SplunkQueryBuilder("main");
     builder.addSourceType("access_combined_wcookie");
     builder.addSourceType("sourcetype2");

@@ -75,7 +75,7 @@ WHERE earliestTime='-15m' AND latestTime='now'
 ```
 The variables set in a query override the defaults from the configuration. 
   
-  ### Data Types
+ ## Data Types
   Splunk does not have sophisticated data types and unfortunately does not provide metadata from its query results.  With the exception of the fields below, Drill will interpret
    all fields as `VARCHAR` and hence you will have to convert them to the appropriate data type at query time.
   
@@ -91,6 +91,27 @@ The variables set in a query override the defaults from the configuration.
   * `date_year`
   * `linecount`
   
+ ### Nested Data
+ Splunk has two different types of nested data which roughly map to Drill's `LIST` and `MAP` data types. Unfortunately, there is no easy way to identify whether a field is a
+  nested field at querytime as Splunk does not provide any metadata and therefore all fields are treated as `VARCHAR`.
+  
+  However, Drill does have built in functions to easily convert Splunk multifields into Drill `LIST` and `MAP` data types. For a LIST, simply use the 
+  `SPLIT(<field>, ' ')` function to split the field into a `LIST`.
+  
+  `MAP` data types are rendered as JSON in Splunk. Fortunately JSON can easily be parsed into a Drill Map by using the `convert_fromJSON()` function.  The query below
+   demonstrates how to convert a JSON column into a Drill `MAP`.
+  
+```sql
+SELECT convert_fromJSON(_raw) 
+FROM splunk.spl
+WHERE spl = '| makeresults
+| eval _raw="{\"pc\":{\"label\":\"PC\",\"count\":24,\"peak24\":12},\"ps3\":
+{\"label\":\"PS3\",\"count\":51,\"peak24\":10},\"xbox\":
+{\"label\":\"XBOX360\",\"count\":40,\"peak24\":11},\"xone\":
+{\"label\":\"XBOXONE\",\"count\":105,\"peak24\":99},\"ps4\":
+{\"label\":\"PS4\",\"count\":200,\"peak24\":80}}"'
+```
+
 ### Selecting Fields
 When you execute a query in Drill for Splunk, the fields you select are pushed down to Splunk. Therefore, it will always be more efficient to explicitly specify fields to push
  down to Splunk rather than using `SELECT *` queries.

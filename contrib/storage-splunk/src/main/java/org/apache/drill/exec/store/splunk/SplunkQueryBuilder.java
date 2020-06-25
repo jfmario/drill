@@ -135,15 +135,19 @@ public class SplunkQueryBuilder {
    * Processes the filters for a Splunk query
    * @param filters A HashMap of filters
    */
-  // TODO Replace with ArrayList of Filter objects
   public void addFilters(Map<String, ExprNode.ColRelOpConstNode> filters) {
     if (filters == null) {
       return;
     }
     for ( Map.Entry filter : filters.entrySet()) {
-      String fieldName = (String)filter.getKey();
+      String fieldName = ((ExprNode.ColRelOpConstNode)filter.getValue()).colName;
       RelOp operation = ((ExprNode.ColRelOpConstNode)filter.getValue()).op;
       String value = ((ExprNode.ColRelOpConstNode)filter.getValue()).value.value.toString();
+
+      // Ignore special cases
+      if (SplunkUtils.isSpecialField(fieldName)) {
+        continue;
+      }
 
       switch (operation) {
         case EQ:
@@ -214,16 +218,17 @@ public class SplunkQueryBuilder {
       query += " | fields " + fieldList;
     }
 
+    // Add limit
+    if (this.limit > 0) {
+      query += " | head " + this.limit;
+    }
+
     // Add table logic. This tells Splunk to return the data in tabular form rather than the mess that it usually generates
     if ( Strings.isNullOrEmpty(fieldList)) {
       fieldList = "*";
     }
     query += " | table " + fieldList;
 
-    // Add limit
-    if (this.limit > 0) {
-      query += " | head " + this.limit;
-    }
     return query;
   }
 

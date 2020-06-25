@@ -128,7 +128,7 @@ public class SplunkPushDownListener implements FilterPushDownListener {
     }
 
     /**
-     * Convert the equality nodes to a map of param/string pairs using
+     * Convert the nodes to a map of param/string pairs using
      * the case specified in the storage plugin config.
      */
     @Override

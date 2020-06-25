@@ -39,7 +39,7 @@ public class SplunkTestSuite {
 
   @BeforeClass
   public static void initSplunk() {
-    splunkStoragePluginConfig= new SplunkPluginConfig( "cgivre", "password", "localhost", 8089, "-30d", null);
+    splunkStoragePluginConfig= new SplunkPluginConfig( "admin", "password", "localhost", 8089, "-30d", null);
     splunkStoragePluginConfig.setEnabled(true);
   }
 
