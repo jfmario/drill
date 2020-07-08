@@ -27,7 +27,6 @@ import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
-import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.apache.drill.shaded.guava.com.google.common.base.Charsets;
 import org.apache.hadoop.mapred.FileSplit;
 import org.slf4j.Logger;
@@ -42,25 +41,15 @@ import java.util.List;
 public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> {
 
   private static final Logger logger = LoggerFactory.getLogger(HttpdLogBatchReader.class);
-
   public static final String RAW_LINE_COL_NAME = "_raw";
-
   private final HttpdLogFormatConfig formatConfig;
-
   private final Parser<HttpdLogRecord> parser;
-
   private FileSplit split;
-
   private InputStream fsStream;
-
   private ResultSetLoader loader;
-
   private RowSetLoader rowWriter;
-
   private BufferedReader reader;
-
   private boolean firstLine = true;
-
   private int lineNumber;
 
   public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig) {
@@ -71,6 +60,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   @Override
   public boolean open(FileSchemaNegotiator negotiator) {
     // Open the input stream to the log file
+    // TODO Get the error context
+
     openFile(negotiator);
     loader = negotiator.build();
     rowWriter = loader.writer();
@@ -144,6 +135,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   private void buildSchema() {
     logger.debug("Building schema with config {}.", formatConfig.getLogFormat());
+
+    // TODO Make this column not appear in star queries
     SchemaBuilder builder = new SchemaBuilder()
       .addNullable(RAW_LINE_COL_NAME, TypeProtos.MinorType.VARCHAR);
 

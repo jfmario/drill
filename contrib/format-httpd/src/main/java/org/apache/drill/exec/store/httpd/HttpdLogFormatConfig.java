@@ -34,13 +34,9 @@ import java.util.Objects;
 public class HttpdLogFormatConfig implements FormatPluginConfig {
 
   public static final String DEFAULT_TS_FORMAT = "dd/MMM/yyyy:HH:mm:ss ZZ";
-
   private final String logFormat;
-
   private final String timestampFormat;
-
   private final List<String> extensions;
-
   private final int maxErrors;
 
 
@@ -97,7 +93,8 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
     }
     HttpdLogFormatConfig other = (HttpdLogFormatConfig) obj;
     return Objects.equals(logFormat, other.logFormat)
-      && Objects.equals(timestampFormat, other.timestampFormat);
+      && Objects.equals(timestampFormat, other.timestampFormat)
+      && Objects.equals(maxErrors, other.maxErrors);
   }
 
   @Override
@@ -105,6 +102,7 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
     return new PlanStringBuilder(this)
         .field("log format", logFormat)
         .field("timestamp format", timestampFormat)
+        .field("max errors", maxErrors)
         .toString();
   }
 }
