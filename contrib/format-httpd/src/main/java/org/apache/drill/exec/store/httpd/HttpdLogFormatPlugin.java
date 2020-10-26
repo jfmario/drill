@@ -45,14 +45,16 @@ public class HttpdLogFormatPlugin extends EasyFormatPlugin<HttpdLogFormatConfig>
   private static class HtttpLogReaderFactory extends FileReaderFactory {
 
     private final HttpdLogFormatConfig config;
+    private final int maxRecords;
 
-    private HtttpLogReaderFactory(HttpdLogFormatConfig config) {
+    private HtttpLogReaderFactory(HttpdLogFormatConfig config, int maxRecords) {
       this.config = config;
+      this.maxRecords = maxRecords;
     }
 
     @Override
     public ManagedReader<? extends FileScanFramework.FileSchemaNegotiator> newReader() {
-      return new HttpdLogBatchReader(config);
+      return new HttpdLogBatchReader(config, maxRecords);
     }
   }
 
@@ -76,20 +78,21 @@ public class HttpdLogFormatPlugin extends EasyFormatPlugin<HttpdLogFormatConfig>
     config.fsConf = fsConf;
     config.defaultName = DEFAULT_NAME;
     config.readerOperatorType = UserBitShared.CoreOperatorType.HTPPD_LOG_SUB_SCAN_VALUE;
-    config.useEnhancedScan = true;  // Set to true later
+    config.useEnhancedScan = true;
+    config.supportsLimitPushdown = true;
     return config;
   }
 
   @Override
   public ManagedReader<? extends FileSchemaNegotiator> newBatchReader(
     EasySubScan scan, OptionManager options) {
-    return new HttpdLogBatchReader(formatConfig);
+    return new HttpdLogBatchReader(formatConfig, scan.getMaxRecords());
   }
 
   @Override
   protected FileScanFramework.FileScanBuilder frameworkBuilder(OptionManager options, EasySubScan scan) throws ExecutionSetupException {
     FileScanFramework.FileScanBuilder builder = new FileScanFramework.FileScanBuilder();
-    builder.setReaderFactory(new HtttpLogReaderFactory(formatConfig));
+    builder.setReaderFactory(new HtttpLogReaderFactory(formatConfig, scan.getMaxRecords()));
 
     initScanBuilder(builder, scan);
     builder.nullType(Types.optional(TypeProtos.MinorType.VARCHAR));

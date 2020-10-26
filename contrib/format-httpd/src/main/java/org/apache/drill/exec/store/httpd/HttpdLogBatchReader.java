@@ -51,10 +51,12 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   private BufferedReader reader;
   private boolean firstLine = true;
   private int lineNumber;
+  private final int maxRecords;
 
-  public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig) {
+  public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig, int maxRecords) {
     this.formatConfig = formatConfig;
     this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, formatConfig.getLogFormat(), formatConfig.getTimestampFormat());
+    this.maxRecords = maxRecords;
   }
 
   @Override
@@ -82,6 +84,12 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   private boolean nextLine(RowSetLoader rowWriter) {
     String line;
+
+    // Check if the limit has been reached
+    if (rowWriter.limitReached(maxRecords)) {
+      return false;
+    }
+
     try {
       line = reader.readLine();
     } catch (Exception e) {

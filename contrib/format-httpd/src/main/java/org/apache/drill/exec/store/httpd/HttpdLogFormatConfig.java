@@ -80,7 +80,7 @@ public class HttpdLogFormatConfig implements FormatPluginConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(logFormat, timestampFormat);
+    return Objects.hash(logFormat, timestampFormat, maxErrors);
   }
 
   @Override
