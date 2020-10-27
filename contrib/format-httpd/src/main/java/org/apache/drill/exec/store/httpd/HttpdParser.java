@@ -44,7 +44,7 @@ public class HttpdParser {
   public static final String SAFE_WILDCARD = "_$";
   public static final String SAFE_SEPARATOR = "_";
   public static final String REMAPPING_FLAG = "#";
-  private static String RAW_LINE_COL_NAME = "_raw";
+  public static String RAW_LINE_COL_NAME = "_raw";
 
   private final Parser<HttpdLogRecord> parser;
   private RowSetLoader rowWriter;
@@ -52,7 +52,7 @@ public class HttpdParser {
 
   private HttpdLogRecord record;
 
-  public static final HashMap<String, String> LOGFIELDS = new HashMap<String, String>();
+  /*public static final HashMap<String, String> LOGFIELDS = new HashMap<>();
 
   static {
     LOGFIELDS.put("connection.client.ip", "IP:connection.client.ip");
@@ -217,7 +217,7 @@ public class HttpdParser {
     LOGFIELDS.put("request.referer", "HTTP.URI:request.referer");
     LOGFIELDS.put("request.referer.last", "HTTP.URI:request.referer.last");
     LOGFIELDS.put("request.referer.original", "HTTP.URI:request.referer.original");
-  }
+  }*/
 
   public HttpdParser(final String logFormat,
                      final String timestampFormat, RowSetLoader rowWriter)
@@ -274,7 +274,7 @@ public class HttpdParser {
    * @param drillFieldName name to be cleansed.
    * @return
    */
-  public static String parserFormattedFieldName(String drillFieldName) {
+  /*public static String parserFormattedFieldName(String drillFieldName) {
 
     //The Useragent fields contain a dash which causes potential problems if the field name is not escaped properly
     //This removes the dash
@@ -285,7 +285,7 @@ public class HttpdParser {
     String tempFieldName;
     tempFieldName = LOGFIELDS.get(drillFieldName);
     return tempFieldName.replace(SAFE_WILDCARD, PARSER_WILDCARD).replaceAll(SAFE_SEPARATOR, ".").replaceAll("\\.\\.", "_");
-  }
+  }*/
 
   /**
    * Drill cannot deal with fields with dots in them like request.referer. For the sake of simplicity we are going

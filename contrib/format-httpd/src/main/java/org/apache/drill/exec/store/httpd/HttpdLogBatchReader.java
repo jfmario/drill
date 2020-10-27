@@ -20,12 +20,14 @@ package org.apache.drill.exec.store.httpd;
 
 import nl.basjes.parse.core.Parser;
 import nl.basjes.parse.httpdlog.HttpdLoglineParser;
+import org.apache.drill.common.exceptions.CustomErrorContext;
 import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchemaNegotiator;
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
+import org.apache.drill.exec.proto.BitControl.CustomMessageOrBuilder;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.shaded.guava.com.google.common.base.Charsets;
 import org.apache.hadoop.mapred.FileSplit;
@@ -51,7 +53,9 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   private BufferedReader reader;
   private boolean firstLine = true;
   private int lineNumber;
+  private CustomErrorContext errorContext;
   private final int maxRecords;
+
 
   public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig, int maxRecords) {
     this.formatConfig = formatConfig;
@@ -62,9 +66,8 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   @Override
   public boolean open(FileSchemaNegotiator negotiator) {
     // Open the input stream to the log file
-    // TODO Get the error context
-
     openFile(negotiator);
+    errorContext = negotiator.parentErrorContext();
     loader = negotiator.build();
     rowWriter = loader.writer();
     // Get the parser
@@ -97,6 +100,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
         .dataReadError(e)
         .message("Error reading HTTPD file at line number %d", lineNumber)
         .addContext(e.getMessage())
+        .addContext(errorContext)
         .build(logger);
     }
 
