@@ -31,13 +31,9 @@ import java.util.Objects;
 public class HttpdDrillLogRecord implements Writable {
 
   private final Map<String, String> stringValues = new HashMap<>();
-
   private final Map<String, Long> longValues = new HashMap<>();
-
   private final Map<String, Double> doubleValues = new HashMap<>();
-
   private final Map<String, Map<String, String>> stringSetValues = new HashMap<>();
-
   private final Map<String, String> stringSetPrefixes = new HashMap<>();
 
   @Override

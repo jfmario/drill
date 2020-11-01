@@ -195,7 +195,6 @@ public class TestHTTPDLogReader extends ClusterTest {
       .go();
   }
 
-
   @Test
   public void testCount() throws Exception {
     String sql = "SELECT COUNT(*) FROM cp.`httpd/hackers-access-small.httpd`";
@@ -221,6 +220,7 @@ public class TestHTTPDLogReader extends ClusterTest {
 
     RowSet results = client.queryBuilder().sql(sql).rowSet();
     results.print();
+
     assertTrue(true);
 
     /*TupleMetadata expectedSchema = new SchemaBuilder()

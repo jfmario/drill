@@ -18,7 +18,11 @@
 
 package org.apache.drill.exec.store.httpd;
 
+import io.prestosql.jdbc.$internal.guava.base.Strings;
 import nl.basjes.parse.core.Parser;
+import nl.basjes.parse.core.exceptions.DissectionFailure;
+import nl.basjes.parse.core.exceptions.InvalidDissectorException;
+import nl.basjes.parse.core.exceptions.MissingDissectorsException;
 import nl.basjes.parse.httpdlog.HttpdLoglineParser;
 import org.apache.drill.common.exceptions.CustomErrorContext;
 import org.apache.drill.common.exceptions.UserException;
@@ -27,7 +31,6 @@ import org.apache.drill.exec.physical.impl.scan.file.FileScanFramework.FileSchem
 import org.apache.drill.exec.physical.impl.scan.framework.ManagedReader;
 import org.apache.drill.exec.physical.resultSet.ResultSetLoader;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
-import org.apache.drill.exec.proto.BitControl.CustomMessageOrBuilder;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.shaded.guava.com.google.common.base.Charsets;
 import org.apache.hadoop.mapred.FileSplit;
@@ -45,7 +48,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   private static final Logger logger = LoggerFactory.getLogger(HttpdLogBatchReader.class);
   public static final String RAW_LINE_COL_NAME = "_raw";
   private final HttpdLogFormatConfig formatConfig;
-  private final Parser<HttpdLogRecord> parser;
+  private HttpdParser parser;
   private FileSplit split;
   private InputStream fsStream;
   private ResultSetLoader loader;
@@ -59,7 +62,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   public HttpdLogBatchReader(HttpdLogFormatConfig formatConfig, int maxRecords) {
     this.formatConfig = formatConfig;
-    this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, formatConfig.getLogFormat(), formatConfig.getTimestampFormat());
     this.maxRecords = maxRecords;
   }
 
@@ -67,11 +69,20 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
   public boolean open(FileSchemaNegotiator negotiator) {
     // Open the input stream to the log file
     openFile(negotiator);
+    try {
+      parser = new HttpdParser(formatConfig.getLogFormat(), formatConfig.getTimestampFormat());
+      negotiator.tableSchema(parser.setupParser(formatConfig.getLogFormat()), true);
+      // TODO Add _raw column to schema and make it invisible
+
+    } catch (Exception e) {
+      // Do something
+    }
+
     errorContext = negotiator.parentErrorContext();
     loader = negotiator.build();
     rowWriter = loader.writer();
-    // Get the parser
-    buildSchema();
+    parser.setRowWriter(rowWriter);
+
     return true;
   }
 
@@ -95,6 +106,20 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
     try {
       line = reader.readLine();
+      if (line == null) {
+        return false;
+      } else if (line.isEmpty()) {
+        return true;
+      }
+
+      // Start the row
+      rowWriter.start();
+
+      parser.parse(line);
+
+      // Finish the row
+      rowWriter.save();
+      lineNumber++;
     } catch (Exception e) {
       throw UserException
         .dataReadError(e)
@@ -103,18 +128,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
         .addContext(errorContext)
         .build(logger);
     }
-
-    if (firstLine) {
-      firstLine = false;
-    }
-    // Start the row
-    rowWriter.start();
-
-
-    // Finish the row
-    rowWriter.save();
-    lineNumber++;
-
     return false;
   }
 
@@ -145,7 +158,7 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
     reader = new BufferedReader(new InputStreamReader(fsStream, Charsets.UTF_8));
   }
 
-  private void buildSchema() {
+  /*private void buildSchema() {
     logger.debug("Building schema with config {}.", formatConfig.getLogFormat());
 
     // TODO Make this column not appear in star queries
@@ -169,6 +182,6 @@ public class HttpdLogBatchReader implements ManagedReader<FileSchemaNegotiator> 
 
   private List<String> getPossiblePaths() {
     return parser.getPossiblePaths();
-  }
+  }*/
 
 }

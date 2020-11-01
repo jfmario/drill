@@ -20,6 +20,7 @@ package org.apache.drill.exec.store.httpd;
 import org.apache.drill.common.types.TypeProtos;
 import org.apache.drill.exec.physical.resultSet.RowSetLoader;
 import org.apache.drill.exec.record.metadata.SchemaBuilder;
+import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.shaded.guava.com.google.common.base.Preconditions;
 import org.apache.drill.shaded.guava.com.google.common.collect.Maps;
 import nl.basjes.parse.core.Casts;
@@ -52,175 +53,9 @@ public class HttpdParser {
 
   private HttpdLogRecord record;
 
-  /*public static final HashMap<String, String> LOGFIELDS = new HashMap<>();
-
-  static {
-    LOGFIELDS.put("connection.client.ip", "IP:connection.client.ip");
-    LOGFIELDS.put("connection.client.ip.last", "IP:connection.client.ip.last");
-    LOGFIELDS.put("connection.client.ip.original", "IP:connection.client.ip.original");
-    LOGFIELDS.put("connection.client.peerip", "IP:connection.client.peerip");
-    LOGFIELDS.put("connection.client.peerip.original", "IP:connection.client.peerip.original");
-    LOGFIELDS.put("connection.client.peerip.last", "IP:connection.client.peerip.last");
-    LOGFIELDS.put("connection.server.ip", "IP:connection.server.ip");
-    LOGFIELDS.put("connection.server.ip.original", "IP:connection.server.ip.original");
-    LOGFIELDS.put("connection.server.ip.last", "IP:connection.server.ip.last");
-    LOGFIELDS.put("response.body.bytesclf", "BYTES:response.body.bytesclf");
-    LOGFIELDS.put("response.body.bytes", "BYTESCLF:response.body.bytes");
-    LOGFIELDS.put("response.body.bytes.original", "BYTESCLF:response.body.bytes.original");
-    LOGFIELDS.put("response.body.bytes.last", "BYTESCLF:response.body.bytes.last");
-    LOGFIELDS.put("request.cookies.foobar", "HTTP.COOKIE:request.cookies.foobar");
-    LOGFIELDS.put("server.environment.foobar", "VARIABLE:server.environment.foobar");
-    LOGFIELDS.put("server.filename", "FILENAME:server.filename");
-    LOGFIELDS.put("server.filename.original", "FILENAME:server.filename.original");
-    LOGFIELDS.put("server.filename.last", "FILENAME:server.filename.last");
-    LOGFIELDS.put("connection.client.host", "IP:connection.client.host");
-    LOGFIELDS.put("connection.client.host.original", "IP:connection.client.host.original");
-    LOGFIELDS.put("connection.client.host.last", "IP:connection.client.host.last");
-    LOGFIELDS.put("request.protocol", "PROTOCOL:request.protocol");
-    LOGFIELDS.put("request.protocol.original", "PROTOCOL:request.protocol.original");
-    LOGFIELDS.put("request.protocol.last", "PROTOCOL:request.protocol.last");
-    LOGFIELDS.put("request.header.foobar", "HTTP.HEADER:request.header.foobar");
-    LOGFIELDS.put("request.trailer.foobar", "HTTP.TRAILER:request.trailer.foobar");
-    LOGFIELDS.put("connection.keepalivecount", "NUMBER:connection.keepalivecount");
-    LOGFIELDS.put("connection.keepalivecount.original", "NUMBER:connection.keepalivecount.original");
-    LOGFIELDS.put("connection.keepalivecount.last", "NUMBER:connection.keepalivecount.last");
-    LOGFIELDS.put("connection.client.logname", "NUMBER:connection.client.logname");
-    LOGFIELDS.put("connection.client.logname.original", "NUMBER:connection.client.logname.original");
-    LOGFIELDS.put("connection.client.logname.last", "NUMBER:connection.client.logname.last");
-    LOGFIELDS.put("request.errorlogid", "STRING:request.errorlogid");
-    LOGFIELDS.put("request.errorlogid.original", "STRING:request.errorlogid.original");
-    LOGFIELDS.put("request.errorlogid.last", "STRING:request.errorlogid.last");
-    LOGFIELDS.put("request.method", "HTTP.METHOD:request.method");
-    LOGFIELDS.put("request.method.original", "HTTP.METHOD:request.method.original");
-    LOGFIELDS.put("request.method.last", "HTTP.METHOD:request.method.last");
-    LOGFIELDS.put("server.module_note.foobar", "STRING:server.module_note.foobar");
-    LOGFIELDS.put("response.header.foobar", "HTTP.HEADER:response.header.foobar");
-    LOGFIELDS.put("response.trailer.foobar", "HTTP.TRAILER:response.trailer.foobar");
-    LOGFIELDS.put("request.server.port.canonical", "PORT:request.server.port.canonical");
-    LOGFIELDS.put("request.server.port.canonical.original", "PORT:request.server.port.canonical.original");
-    LOGFIELDS.put("request.server.port.canonical.last", "PORT:request.server.port.canonical.last");
-    LOGFIELDS.put("connection.server.port.canonical", "PORT:connection.server.port.canonical");
-    LOGFIELDS.put("connection.server.port.canonical.original", "PORT:connection.server.port.canonical.original");
-    LOGFIELDS.put("connection.server.port.canonical.last", "PORT:connection.server.port.canonical.last");
-    LOGFIELDS.put("connection.server.port", "PORT:connection.server.port");
-    LOGFIELDS.put("connection.server.port.original", "PORT:connection.server.port.original");
-    LOGFIELDS.put("connection.server.port.last", "PORT:connection.server.port.last");
-    LOGFIELDS.put("connection.client.port", "PORT:connection.client.port");
-    LOGFIELDS.put("connection.client.port.original", "PORT:connection.client.port.original");
-    LOGFIELDS.put("connection.client.port.last", "PORT:connection.client.port.last");
-    LOGFIELDS.put("connection.server.child.threadid", "NUMBER:connection.server.child.threadid");
-    LOGFIELDS.put("connection.server.child.threadid.original", "NUMBER:connection.server.child.threadid.original");
-    LOGFIELDS.put("connection.server.child.threadid.last", "NUMBER:connection.server.child.threadid.last");
-    LOGFIELDS.put("connection.server.child.hexthreadid", "NUMBER:connection.server.child.hexthreadid");
-    LOGFIELDS.put("connection.server.child.hexthreadid.original", "NUMBER:connection.server.child.hexthreadid.original");
-    LOGFIELDS.put("connection.server.child.hexthreadid.last", "NUMBER:connection.server.child.hexthreadid.last");
-    LOGFIELDS.put("request.querystring", "HTTP.QUERYSTRING:request.querystring");
-    LOGFIELDS.put("request.querystring.original", "HTTP.QUERYSTRING:request.querystring.original");
-    LOGFIELDS.put("request.querystring.last", "HTTP.QUERYSTRING:request.querystring.last");
-    LOGFIELDS.put("request.firstline", "HTTP.FIRSTLINE:request.firstline");
-    LOGFIELDS.put("request.firstline.original", "HTTP.FIRSTLINE:request.firstline.original");
-    LOGFIELDS.put("request.firstline.last", "HTTP.FIRSTLINE:request.firstline.last");
-    LOGFIELDS.put("request.handler", "STRING:request.handler");
-    LOGFIELDS.put("request.handler.original", "STRING:request.handler.original");
-    LOGFIELDS.put("request.handler.last", "STRING:request.handler.last");
-    LOGFIELDS.put("request.status", "STRING:request.status");
-    LOGFIELDS.put("request.status.original", "STRING:request.status.original");
-    LOGFIELDS.put("request.status.last", "STRING:request.status.last");
-    LOGFIELDS.put("request.receive.time", "TIME.STAMP:request.receive.time");
-    LOGFIELDS.put("request.receive.time.original", "TIME.STAMP:request.receive.time.original");
-    LOGFIELDS.put("request.receive.time.last", "TIME.STAMP:request.receive.time.last");
-    LOGFIELDS.put("request.receive.time.year", "TIME.YEAR:request.receive.time.year");
-    LOGFIELDS.put("request.receive.time.begin.year", "TIME.YEAR:request.receive.time.begin.year");
-    LOGFIELDS.put("request.receive.time.end.year", "TIME.YEAR:request.receive.time.end.year");
-    LOGFIELDS.put("request.receive.time.sec", "TIME.SECONDS:request.receive.time.sec");
-    LOGFIELDS.put("request.receive.time.sec.original", "TIME.SECONDS:request.receive.time.sec.original");
-    LOGFIELDS.put("request.receive.time.sec.last", "TIME.SECONDS:request.receive.time.sec.last");
-    LOGFIELDS.put("request.receive.time.begin.sec", "TIME.SECONDS:request.receive.time.begin.sec");
-    LOGFIELDS.put("request.receive.time.begin.sec.original", "TIME.SECONDS:request.receive.time.begin.sec.original");
-    LOGFIELDS.put("request.receive.time.begin.sec.last", "TIME.SECONDS:request.receive.time.begin.sec.last");
-    LOGFIELDS.put("request.receive.time.end.sec", "TIME.SECONDS:request.receive.time.end.sec");
-    LOGFIELDS.put("request.receive.time.end.sec.original", "TIME.SECONDS:request.receive.time.end.sec.original");
-    LOGFIELDS.put("request.receive.time.end.sec.last", "TIME.SECONDS:request.receive.time.end.sec.last");
-    LOGFIELDS.put("request.receive.time.msec", "TIME.EPOCH:request.receive.time.msec");
-    LOGFIELDS.put("request.receive.time.msec.original", "TIME.EPOCH:request.receive.time.msec.original");
-    LOGFIELDS.put("request.receive.time.msec.last", "TIME.EPOCH:request.receive.time.msec.last");
-    LOGFIELDS.put("request.receive.time.begin.msec", "TIME.EPOCH:request.receive.time.begin.msec");
-    LOGFIELDS.put("request.receive.time.begin.msec.original", "TIME.EPOCH:request.receive.time.begin.msec.original");
-    LOGFIELDS.put("request.receive.time.begin.msec.last", "TIME.EPOCH:request.receive.time.begin.msec.last");
-    LOGFIELDS.put("request.receive.time.end.msec", "TIME.EPOCH:request.receive.time.end.msec");
-    LOGFIELDS.put("request.receive.time.end.msec.original", "TIME.EPOCH:request.receive.time.end.msec.original");
-    LOGFIELDS.put("request.receive.time.end.msec.last", "TIME.EPOCH:request.receive.time.end.msec.last");
-    LOGFIELDS.put("request.receive.time.usec", "TIME.EPOCH.USEC:request.receive.time.usec");
-    LOGFIELDS.put("request.receive.time.usec.original", "TIME.EPOCH.USEC:request.receive.time.usec.original");
-    LOGFIELDS.put("request.receive.time.usec.last", "TIME.EPOCH.USEC:request.receive.time.usec.last");
-    LOGFIELDS.put("request.receive.time.begin.usec", "TIME.EPOCH.USEC:request.receive.time.begin.usec");
-    LOGFIELDS.put("request.receive.time.begin.usec.original", "TIME.EPOCH.USEC:request.receive.time.begin.usec.original");
-    LOGFIELDS.put("request.receive.time.begin.usec.last", "TIME.EPOCH.USEC:request.receive.time.begin.usec.last");
-    LOGFIELDS.put("request.receive.time.end.usec", "TIME.EPOCH.USEC:request.receive.time.end.usec");
-    LOGFIELDS.put("request.receive.time.end.usec.original", "TIME.EPOCH.USEC:request.receive.time.end.usec.original");
-    LOGFIELDS.put("request.receive.time.end.usec.last", "TIME.EPOCH.USEC:request.receive.time.end.usec.last");
-    LOGFIELDS.put("request.receive.time.msec_frac", "TIME.EPOCH:request.receive.time.msec_frac");
-    LOGFIELDS.put("request.receive.time.msec_frac.original", "TIME.EPOCH:request.receive.time.msec_frac.original");
-    LOGFIELDS.put("request.receive.time.msec_frac.last", "TIME.EPOCH:request.receive.time.msec_frac.last");
-    LOGFIELDS.put("request.receive.time.begin.msec_frac", "TIME.EPOCH:request.receive.time.begin.msec_frac");
-    LOGFIELDS.put("request.receive.time.begin.msec_frac.original", "TIME.EPOCH:request.receive.time.begin.msec_frac.original");
-    LOGFIELDS.put("request.receive.time.begin.msec_frac.last", "TIME.EPOCH:request.receive.time.begin.msec_frac.last");
-    LOGFIELDS.put("request.receive.time.end.msec_frac", "TIME.EPOCH:request.receive.time.end.msec_frac");
-    LOGFIELDS.put("request.receive.time.end.msec_frac.original", "TIME.EPOCH:request.receive.time.end.msec_frac.original");
-    LOGFIELDS.put("request.receive.time.end.msec_frac.last", "TIME.EPOCH:request.receive.time.end.msec_frac.last");
-    LOGFIELDS.put("request.receive.time.usec_frac", "FRAC:request.receive.time.usec_frac");
-    LOGFIELDS.put("request.receive.time.usec_frac.original", "FRAC:request.receive.time.usec_frac.original");
-    LOGFIELDS.put("request.receive.time.usec_frac.last", "FRAC:request.receive.time.usec_frac.last");
-    LOGFIELDS.put("request.receive.time.begin.usec_frac", "FRAC:request.receive.time.begin.usec_frac");
-    LOGFIELDS.put("request.receive.time.begin.usec_frac.original", "FRAC:request.receive.time.begin.usec_frac.original");
-    LOGFIELDS.put("request.receive.time.begin.usec_frac.last", "FRAC:request.receive.time.begin.usec_frac.last");
-    LOGFIELDS.put("request.receive.time.end.usec_frac", "FRAC:request.receive.time.end.usec_frac");
-    LOGFIELDS.put("request.receive.time.end.usec_frac.last", "FRAC:request.receive.time.end.usec_frac.last");
-    LOGFIELDS.put("request.receive.time.end.usec_frac.original", "FRAC:request.receive.time.end.usec_frac.original");
-    LOGFIELDS.put("response.server.processing.time", "SECONDS:response.server.processing.time");
-    LOGFIELDS.put("response.server.processing.time.original", "SECONDS:response.server.processing.time.original");
-    LOGFIELDS.put("response.server.processing.time.last", "SECONDS:response.server.processing.time.last");
-    LOGFIELDS.put("server.process.time", "MICROSECONDS:server.process.time");
-    LOGFIELDS.put("connection.client.user", "STRING:connection.client.user");
-    LOGFIELDS.put("connection.client.user.last", "STRING:connection.client.user.last");
-    LOGFIELDS.put("connection.client.user.original", "STRING:connection.client.user.original");
-    LOGFIELDS.put("request.urlpath", "URI:request.urlpath");
-    LOGFIELDS.put("request.urlpath.original", "URI:request.urlpath.original");
-    LOGFIELDS.put("request.urlpath.last", "URI:request.urlpath.last");
-    LOGFIELDS.put("connection.server.name.canonical", "STRING:connection.server.name.canonical");
-    LOGFIELDS.put("connection.server.name.canonical.last", "STRING:connection.server.name.canonical.last");
-    LOGFIELDS.put("connection.server.name.canonical.original", "STRING:connection.server.name.canonical.original");
-    LOGFIELDS.put("connection.server.name", "STRING:connection.server.name");
-    LOGFIELDS.put("connection.server.name.last", "STRING:connection.server.name.last");
-    LOGFIELDS.put("connection.server.name.original", "STRING:connection.server.name.original");
-    LOGFIELDS.put("response.connection.status", "HTTP.CONNECTSTATUS:response.connection.status");
-    LOGFIELDS.put("response.connection.status.original", "HTTP.CONNECTSTATUS:response.connection.status.original");
-    LOGFIELDS.put("response.connection.status.last", "HTTP.CONNECTSTATUS:response.connection.status.last");
-    LOGFIELDS.put("request.bytes", "BYTES:request.bytes");
-    LOGFIELDS.put("request.bytes.last", "BYTES:request.bytes.last");
-    LOGFIELDS.put("request.bytes.original", "BYTES:request.bytes.original");
-    LOGFIELDS.put("response.bytes", "BYTES:response.bytes");
-    LOGFIELDS.put("response.bytes.last", "BYTES:response.bytes.last");
-    LOGFIELDS.put("response.bytes.original", "BYTES:response.bytes.original");
-    LOGFIELDS.put("total.bytes", "BYTES:total.bytes");
-    LOGFIELDS.put("total.bytes.last", "BYTES:total.bytes.last");
-    LOGFIELDS.put("total.bytes.original", "BYTES:total.bytes.original");
-    LOGFIELDS.put("request.cookies", "HTTP.COOKIES:request.cookies");
-    LOGFIELDS.put("request.cookies.last", "HTTP.COOKIES:request.cookies.last");
-    LOGFIELDS.put("request.cookies.original", "HTTP.COOKIES:request.cookies.original");
-    LOGFIELDS.put("response.cookies", "HTTP.SETCOOKIES:response.cookies");
-    LOGFIELDS.put("response.cookies.last", "HTTP.SETCOOKIES:response.cookies.last");
-    LOGFIELDS.put("response.cookies.original", "HTTP.SETCOOKIES:response.cookies.original");
-    LOGFIELDS.put("request.user-agent", "HTTP.USERAGENT:request.user-agent");
-    LOGFIELDS.put("request.user-agent.last", "HTTP.USERAGENT:request.user-agent.last");
-    LOGFIELDS.put("request.user-agent.original", "HTTP.USERAGENT:request.user-agent.original");
-    LOGFIELDS.put("request.referer", "HTTP.URI:request.referer");
-    LOGFIELDS.put("request.referer.last", "HTTP.URI:request.referer.last");
-    LOGFIELDS.put("request.referer.original", "HTTP.URI:request.referer.original");
-  }*/
 
   public HttpdParser(final String logFormat,
-                     final String timestampFormat, RowSetLoader rowWriter)
+                     final String timestampFormat)
     throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
 
     Preconditions.checkArgument(logFormat != null && !logFormat.trim().isEmpty(), "logFormat cannot be null or empty");
@@ -228,17 +63,20 @@ public class HttpdParser {
 
 
     this.parser = new HttpdLoglineParser<>(HttpdLogRecord.class, logFormat, timestampFormat);
-    this.rowWriter = rowWriter;
-
-    setupParser(logFormat);
-
     if (timestampFormat != null && !timestampFormat.trim().isEmpty()) {
       logger.info("Custom timestamp format has been specified. This is an informational note only as custom timestamps is rather unusual.");
     }
     if (logFormat.contains("\n")) {
       logger.info("Specified logformat is a multiline log format: {}", logFormat);
     }
+
+    setupParser(logFormat);
   }
+
+  public void setRowWriter(RowSetLoader rowWriter) {
+    this.rowWriter = rowWriter;
+  }
+
 
   /**
    * We do not expose the underlying parser or the record which is used to manage the writers.
@@ -274,7 +112,7 @@ public class HttpdParser {
    * @param drillFieldName name to be cleansed.
    * @return
    */
-  /*public static String parserFormattedFieldName(String drillFieldName) {
+ /*public static String parserFormattedFieldName(String drillFieldName) {
 
     //The Useragent fields contain a dash which causes potential problems if the field name is not escaped properly
     //This removes the dash
@@ -293,15 +131,15 @@ public class HttpdParser {
    * Additionally, wild cards will get replaced with _$
    *
    * @param parserFieldName name to be cleansed.
-   * @return
+   * @return The field name formatted for Drill
    */
   public static String drillFormattedFieldName(String parserFieldName) {
 
     //The Useragent fields contain a dash which causes potential problems if the field name is not escaped properly
     //This removes the dash
-    if (parserFieldName.contains("user-agent")) {
+    /*if (parserFieldName.contains("user-agent")) {
       parserFieldName = parserFieldName.replace("user-agent", "useragent");
-    }
+    }*/
 
     if (parserFieldName.contains(":")) {
       String[] fieldPart = parserFieldName.split(":");
@@ -311,7 +149,7 @@ public class HttpdParser {
     }
   }
 
-  private void setupParser(String logFormat)
+  public TupleMetadata setupParser(String logFormat)
           throws NoSuchMethodException, MissingDissectorsException, InvalidDissectorException {
 
     SchemaBuilder builder = new SchemaBuilder()
@@ -339,6 +177,7 @@ public class HttpdParser {
      * because this will be the slowest parsing path possible for the specified format.
      */
     Parser<Object> dummy = new HttpdLoglineParser<>(Object.class, logFormat);
+    // TODO Don't we want requested paths here... not the all possible
     dummy.addParseTarget(String.class.getMethod("indexOf", String.class), allParserPaths);
     for (final Map.Entry<String, String> entry : requestedPaths.entrySet()) {
       final EnumSet<Casts> casts;
@@ -359,11 +198,11 @@ public class HttpdParser {
         casts = dummy.getCasts(entry.getValue());
       }
 
-      Casts dataType = dataType = (Casts) casts.toArray()[casts.size() - 1];
+      Casts dataType = (Casts) casts.toArray()[casts.size() - 1];
 
       switch (dataType) {
         case STRING:
-          builder = builder.addNullable(entry.getKey(), TypeProtos.MinorType.VARCHAR);
+          builder.addNullable(entry.getKey(), TypeProtos.MinorType.VARCHAR);
           break;
         case LONG:
           builder.addNullable(entry.getKey(), TypeProtos.MinorType.BIGINT);
@@ -372,11 +211,10 @@ public class HttpdParser {
           builder.addNullable(entry.getKey(), TypeProtos.MinorType.FLOAT8);
           break;
         default:
-          logger.warn("HTTPD Unsupported data type {} for field {}", dataType.toString(), entry.getKey());
+          logger.error("HTTPD Unsupported data type {} for field {}", dataType.toString(), entry.getKey());
           break;
       }
-      builder.build();
-      //record.addField(parser, mapWriter, casts, entry.getValue(), entry.getKey());
     }
+    return builder.build();
   }
 }
