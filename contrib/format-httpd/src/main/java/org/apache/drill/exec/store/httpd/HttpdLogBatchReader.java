@@ -18,7 +18,6 @@
 
 package org.apache.drill.exec.store.httpd;
 
-import io.prestosql.jdbc.$internal.guava.base.Strings;
 import nl.basjes.parse.core.Parser;
 import nl.basjes.parse.core.exceptions.DissectionFailure;
 import nl.basjes.parse.core.exceptions.InvalidDissectorException;
