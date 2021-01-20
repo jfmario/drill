@@ -40,6 +40,7 @@ import org.apache.drill.exec.record.metadata.SchemaBuilder;
 import org.apache.drill.exec.record.metadata.TupleMetadata;
 import org.apache.drill.exec.store.dfs.DrillFileSystem;
 import org.apache.drill.exec.store.dfs.easy.EasySubScan;
+import org.apache.drill.exec.store.pcapng.decoder.DrillPcapDecoder;
 import org.apache.drill.exec.util.Utilities;
 import org.apache.drill.exec.vector.accessor.ScalarWriter;
 import org.apache.hadoop.fs.Path;
@@ -80,9 +81,9 @@ public class PcapngBatchReader implements ManagedReader<FileSchemaNegotiator> {
       errorContext = negotiator.parentErrorContext();
       DrillFileSystem dfs = negotiator.fileSystem();
       path = dfs.makeQualified(negotiator.split().getPath());
-      in = dfs.openPossiblyCompressedStream(path);
+      in = dfs.openDecompressedInputStream(path);
       // decode the pcap file
-      PcapDecoder decoder = new PcapDecoder(IOUtils.toByteArray(in));
+      DrillPcapDecoder decoder = new DrillPcapDecoder(in);
       decoder.decode();
       pcapIterator = decoder.getSectionList().iterator();
       logger.debug("The config is {}, root is {}, columns has {}", config, scan.getSelectionRoot(), columns);
