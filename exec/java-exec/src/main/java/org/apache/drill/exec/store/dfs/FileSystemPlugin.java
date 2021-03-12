@@ -50,6 +50,8 @@ import org.apache.drill.shaded.guava.com.google.common.collect.ImmutableSet.Buil
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.ftp.FTPFileSystem;
+import org.apache.hadoop.fs.sftp.SFTPFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +90,8 @@ public class FileSystemPlugin extends AbstractStoragePlugin {
           .ifPresent(c -> c.forEach(fsConf::set));
 
       fsConf.set(FileSystem.FS_DEFAULT_NAME_KEY, config.getConnection());
+      fsConf.set("fs.sftp.impl", SFTPFileSystem.class.getName());
+      fsConf.set("fs.sftp.impl", FTPFileSystem.class.getName());
       fsConf.set("fs.classpath.impl", ClassPathFileSystem.class.getName());
       fsConf.set("fs.dropbox.impl", DropboxFileSystem.class.getName());
       fsConf.set("fs.drill-local.impl", LocalSyncableFileSystem.class.getName());

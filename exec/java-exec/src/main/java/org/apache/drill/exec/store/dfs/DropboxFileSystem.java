@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -53,12 +52,10 @@ public class DropboxFileSystem extends FileSystem {
   // TODO Get this from the config or password vault
   private static final String ACCESS_TOKEN = "e9aB6wxgt6kAAAAAAAAAAayiv0u56eRpMeioVAiHIunhH2SuJoadXFxMKSjlZVTk";
 
-
   private static final String ERROR_MSG = "Dropbox is read only.";
   private Path workingDirectory;
   private DbxClientV2 client;
   private FileStatus[] fileStatuses;
-
 
   @Override
   public URI getUri() {
@@ -71,7 +68,7 @@ public class DropboxFileSystem extends FileSystem {
 
   @Override
   public FSDataInputStream open(Path path, int bufferSize) throws IOException {
-    FSDataInputStream fsDataInputStream = null;
+    FSDataInputStream fsDataInputStream;
     String filename = getFileName(path);
     client = getClient();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -112,7 +109,7 @@ public class DropboxFileSystem extends FileSystem {
   }
 
   @Override
-  public FileStatus[] listStatus(Path path) throws FileNotFoundException, IOException {
+  public FileStatus[] listStatus(Path path) throws IOException {
     client = getClient();
     List<FileStatus> fileStatusList = new ArrayList<>();
 
@@ -145,7 +142,7 @@ public class DropboxFileSystem extends FileSystem {
 
   @Override
   public void setWorkingDirectory(Path new_dir) {
-
+    workingDirectory = new_dir;
   }
 
   @Override
@@ -172,6 +169,7 @@ public class DropboxFileSystem extends FileSystem {
       isDirectory = isDirectory(metadata);
       if (isDirectory) {
         // TODO Get size and mod date of directories
+        FolderMetadata folderMetadata = (FolderMetadata) metadata;
         return new FileStatus(0, true, 1, 0, 0, path);
       } else {
         FileMetadata fileMetadata = (FileMetadata) metadata;
