@@ -91,7 +91,7 @@ public class FileSystemPlugin extends AbstractStoragePlugin {
 
       fsConf.set(FileSystem.FS_DEFAULT_NAME_KEY, config.getConnection());
       fsConf.set("fs.sftp.impl", SFTPFileSystem.class.getName());
-      fsConf.set("fs.sftp.impl", FTPFileSystem.class.getName());
+      fsConf.set("fs.ftp.impl", FTPFileSystem.class.getName());
       fsConf.set("fs.classpath.impl", ClassPathFileSystem.class.getName());
       fsConf.set("fs.dropbox.impl", DropboxFileSystem.class.getName());
       fsConf.set("fs.drill-local.impl", LocalSyncableFileSystem.class.getName());

@@ -95,6 +95,11 @@
       <version>3.1.5</version>
     </dependency>
     <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>fake-sftp-server-rule</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.drill.contrib.data</groupId>
       <artifactId>tpch-sample-data</artifactId>
       <version>${project.version}</version>
