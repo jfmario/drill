@@ -225,14 +225,16 @@ public class DropboxFileSystem extends FileSystem {
 
     @Override
     public void seek(long pos) throws IOException {
-      if (mark != 0)
+      if (mark != 0) {
         throw new IllegalStateException();
+      }
 
       reset();
       long skipped = skip(pos);
 
-      if (skipped != pos)
+      if (skipped != pos) {
         throw new IOException();
+      }
     }
 
     @Override
@@ -243,12 +245,15 @@ public class DropboxFileSystem extends FileSystem {
     @Override
     public int read(long position, byte[] buffer, int offset, int length) throws IOException {
 
-      if (position >= buf.length)
+      if (position >= buf.length) {
         throw new IllegalArgumentException();
-      if (position + length > buf.length)
+      }
+      if (position + length > buf.length) {
         throw new IllegalArgumentException();
-      if (length > buffer.length)
+      }
+      if (length > buffer.length) {
         throw new IllegalArgumentException();
+      }
 
       System.arraycopy(buf, (int) position, buffer, offset, length);
       return length;
