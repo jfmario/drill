@@ -309,6 +309,8 @@
               <exclude>dom4j:*</exclude>
               <exclude>org.hibernate:*</exclude>
               <exclude>antlr:*</exclude>
+              <exclude>com.dropbox.*</exclude>
+              <exclude>com.github.stefanbirkner</exclude>
               <exclude>org.ow2.asm:*</exclude>
               <exclude>com.univocity:*</exclude>
               <exclude>net.sf.jpam:*</exclude>
@@ -535,7 +537,7 @@
                   This is likely due to you adding new dependencies to a java-exec and not updating the excludes in this module. This is important as it minimizes the size of the dependency of Drill application users.
 
                   </message>
-                  <maxsize>46600000</maxsize>
+                  <maxsize>56300000</maxsize>
                   <minsize>15000000</minsize>
                   <files>
                    <file>${project.build.directory}/drill-jdbc-all-${project.version}.jar</file>

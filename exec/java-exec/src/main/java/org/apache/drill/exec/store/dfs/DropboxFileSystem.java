@@ -47,8 +47,7 @@ import java.util.List;
 
 public class DropboxFileSystem extends FileSystem {
   private static final Logger logger = LoggerFactory.getLogger(DropboxFileSystem.class);
-
-
+  
   // TODO Get this from the config or password vault
   private static final String ACCESS_TOKEN = "e9aB6wxgt6kAAAAAAAAAAayiv0u56eRpMeioVAiHIunhH2SuJoadXFxMKSjlZVTk";
 
@@ -163,9 +162,12 @@ public class DropboxFileSystem extends FileSystem {
     client = getClient();
     boolean isDirectory;
     try {
+      // TODO Start at path from the argument
       ListFolderResult listFolder = client.files().listFolder("");
+      // TODO Remove hard coded reference here.
       Metadata metadata = client.files().getMetadata("/http-pcap.json");
 
+      // TODO Use private method here.
       isDirectory = isDirectory(metadata);
       if (isDirectory) {
         // TODO Get size and mod date of directories
@@ -176,7 +178,7 @@ public class DropboxFileSystem extends FileSystem {
         return new FileStatus(fileMetadata.getSize(), false, 1, 0, fileMetadata.getClientModified().getTime(), path);
       }
     } catch (Exception e) {
-      throw new IOException("Error accessing file " + path.getName());
+      throw new IOException("Error accessing file " + path.getName() + "\n" + e.getMessage());
     }
   }
 
