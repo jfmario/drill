@@ -34,4 +34,12 @@ public class DropboxFileSystemTest extends ClusterTest {
     RowSet results = client.queryBuilder().sql(sql).rowSet();
     results.print();
   }
+
+  @Test
+  public void testCSVQuery() throws Exception {
+    String sql = "select * from dropbox.`csv/hdf-test.csv`";
+    RowSet results = client.queryBuilder().sql(sql).rowSet();
+    results.print();
+  }
+
 }

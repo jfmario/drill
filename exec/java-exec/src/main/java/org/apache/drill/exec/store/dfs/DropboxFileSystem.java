@@ -43,11 +43,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DropboxFileSystem extends FileSystem {
   private static final Logger logger = LoggerFactory.getLogger(DropboxFileSystem.class);
-  
   // TODO Get this from the config or password vault
   private static final String ACCESS_TOKEN = "e9aB6wxgt6kAAAAAAAAAAayiv0u56eRpMeioVAiHIunhH2SuJoadXFxMKSjlZVTk";
 
@@ -55,6 +56,7 @@ public class DropboxFileSystem extends FileSystem {
   private Path workingDirectory;
   private DbxClientV2 client;
   private FileStatus[] fileStatuses;
+  private final Map<String,FileStatus> fileStatusCache = new HashMap<>();
 
   @Override
   public URI getUri() {
@@ -109,10 +111,9 @@ public class DropboxFileSystem extends FileSystem {
 
   @Override
   public FileStatus[] listStatus(Path path) throws IOException {
+    System.out.println("Listing files at path " + path.getName());
     client = getClient();
     List<FileStatus> fileStatusList = new ArrayList<>();
-
-    // TODO Cache this so that we don't have to do this multiple times.
 
     // Get files and folder metadata from Dropbox root directory
     try {
@@ -141,6 +142,7 @@ public class DropboxFileSystem extends FileSystem {
 
   @Override
   public void setWorkingDirectory(Path new_dir) {
+    System.out.println("Setting working directory to: " + new_dir.getName());
     workingDirectory = new_dir;
   }
 
@@ -157,39 +159,40 @@ public class DropboxFileSystem extends FileSystem {
   @Override
   public FileStatus getFileStatus(Path path) throws IOException {
     String filePath  = Path.getPathWithoutSchemeAndAuthority(path).toString();
+    /*
+     * Dropbox does not allow metadata calls on the root directory
+     */
+    if (filePath.equalsIgnoreCase("/")) {
+      return new FileStatus(0, true, 1, 0, 0, new Path("/"));
+    }
 
-    logger.debug("Getting metadata for file at {}", filePath);
+    System.out.println("Getting metadata for file at " + filePath);
     client = getClient();
-    boolean isDirectory;
     try {
-      // TODO Start at path from the argument
-      ListFolderResult listFolder = client.files().listFolder("");
-      // TODO Remove hard coded reference here.
-      Metadata metadata = client.files().getMetadata("/http-pcap.json");
-
-      // TODO Use private method here.
-      isDirectory = isDirectory(metadata);
-      if (isDirectory) {
-        // TODO Get size and mod date of directories
-        FolderMetadata folderMetadata = (FolderMetadata) metadata;
-        return new FileStatus(0, true, 1, 0, 0, path);
-      } else {
-        FileMetadata fileMetadata = (FileMetadata) metadata;
-        return new FileStatus(fileMetadata.getSize(), false, 1, 0, fileMetadata.getClientModified().getTime(), path);
-      }
+      Metadata metadata = client.files().getMetadata(filePath);
+      return getFileInformation(metadata);
     } catch (Exception e) {
-      throw new IOException("Error accessing file " + path.getName() + "\n" + e.getMessage());
+      throw new IOException("Error accessing file " + filePath + "\n" + e.getMessage());
     }
   }
 
   private FileStatus getFileInformation(Metadata metadata) {
+    if (fileStatusCache.containsKey(metadata.getPathLower())){
+      System.out.println("Returning cached metadata for " + metadata.getPathLower());
+      return fileStatusCache.get(metadata.getPathLower());
+    }
+
+    FileStatus result;
     if (isDirectory(metadata)) {
       // TODO Get size and mod date of directories
-      return new FileStatus(0, true, 1, 0, 0, new Path(metadata.getPathLower()));
+      result = new FileStatus(0, true, 1, 0, 0, new Path(metadata.getPathLower()));
     } else {
       FileMetadata fileMetadata = (FileMetadata) metadata;
-      return new FileStatus(fileMetadata.getSize(), false, 1, 0, fileMetadata.getClientModified().getTime(), new Path(metadata.getPathLower()));
+      result = new FileStatus(fileMetadata.getSize(), false, 1, 0, fileMetadata.getClientModified().getTime(), new Path(metadata.getPathLower()));
     }
+
+    fileStatusCache.put(metadata.getPathLower(), result);
+    return result;
   }
 
   private DbxClientV2 getClient() {
