@@ -111,7 +111,6 @@ public class DropboxFileSystem extends FileSystem {
 
   @Override
   public FileStatus[] listStatus(Path path) throws IOException {
-    System.out.println("Listing files at path " + path.getName());
     client = getClient();
     List<FileStatus> fileStatusList = new ArrayList<>();
 
@@ -165,8 +164,6 @@ public class DropboxFileSystem extends FileSystem {
     if (filePath.equalsIgnoreCase("/")) {
       return new FileStatus(0, true, 1, 0, 0, new Path("/"));
     }
-
-    System.out.println("Getting metadata for file at " + filePath);
     client = getClient();
     try {
       Metadata metadata = client.files().getMetadata(filePath);
@@ -178,7 +175,6 @@ public class DropboxFileSystem extends FileSystem {
 
   private FileStatus getFileInformation(Metadata metadata) {
     if (fileStatusCache.containsKey(metadata.getPathLower())){
-      System.out.println("Returning cached metadata for " + metadata.getPathLower());
       return fileStatusCache.get(metadata.getPathLower());
     }
 
