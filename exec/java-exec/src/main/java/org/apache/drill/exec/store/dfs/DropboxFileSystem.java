@@ -49,8 +49,6 @@ import java.util.Map;
 
 public class DropboxFileSystem extends FileSystem {
   private static final Logger logger = LoggerFactory.getLogger(DropboxFileSystem.class);
-  // TODO Get this from the config or password vault
-  private static final String ACCESS_TOKEN = "e9aB6wxgt6kAAAAAAAAAAayiv0u56eRpMeioVAiHIunhH2SuJoadXFxMKSjlZVTk";
 
   private static final String ERROR_MSG = "Dropbox is read only.";
   private Path workingDirectory;
@@ -81,7 +79,6 @@ public class DropboxFileSystem extends FileSystem {
     }
     return fsDataInputStream;
   }
-
 
   @Override
   public FSDataOutputStream create(Path f,
@@ -196,8 +193,16 @@ public class DropboxFileSystem extends FileSystem {
       return client;
     }
 
-    DbxRequestConfig config = DbxRequestConfig.newBuilder("datadistillr").build();
-    this.client = new DbxClientV2(config, ACCESS_TOKEN);
+    // read preferred client identifier from config or use "Apache/Drill"
+    String clientIdentifier = this.getConf().get("clientIdentifier", "Apache/Drill");
+    logger.info("Creating dropbox client with client identifier: {}", clientIdentifier);
+    DbxRequestConfig config = DbxRequestConfig.newBuilder(clientIdentifier).build();
+
+    // read access token from config or credentials provider
+    logger.info("Reading dropbox access token from configuration or credentials provider");
+    String accessToken = this.getConf().get("dropboxAccessToken", "");
+
+    this.client = new DbxClientV2(config, accessToken);
     return this.client;
   }
 
