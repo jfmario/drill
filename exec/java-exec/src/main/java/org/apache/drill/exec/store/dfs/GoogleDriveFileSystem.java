@@ -18,6 +18,8 @@
 
 package org.apache.drill.exec.store.dfs;
 
+import com.google.api.services.drive.Drive;
+
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -46,6 +48,8 @@ public class GoogleDriveFileSystem extends FileSystem {
 
     private static final String READONLY_ERROR_MESSAGE = "Google Drive is read-only.";
 
+    private Drive client;
+
     private Path workingDirectory;
     private FileStatus[] fileStatuses;
     private final Map<String,FileStatus> fileStatusCache = new HashMap<String,FileStatus>();
@@ -61,8 +65,29 @@ public class GoogleDriveFileSystem extends FileSystem {
 
     @Override
     public FSDataInputStream open(Path path, int bufferSize) throws IOException {
-        
+
         FSDataInputStream stream;
         String fileName = path.toUri().getPath();
+    }
+
+    private Drive getClient() {
+
+        if (client != null) {
+            return client;
+        }
+
+        // read preferred app name
+        String googleDriveAppName = this.getConf().get("googleDriveAppName", "Apache/Drill");
+
+        // read access token from config
+        logger.info("Reading Google Drive access token from configuration.");
+        String googleDriveAccessToken = this.getConf().get("googleDriveAccessToken", "");
+
+        GoogleCredential credential = new GoogleCredential().setAccessToken(googleDriveAccessToken);
+        Drive client = new Drive.builder(new NetHttpTransport(),
+                                        GsonFactory.getDefaultInstance(),
+                                        credential)
+            .setApplicationName(googleDriveAppName)
+            .build();
     }
 }
