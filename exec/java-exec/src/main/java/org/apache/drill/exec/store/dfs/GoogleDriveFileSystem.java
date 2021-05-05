@@ -18,6 +18,9 @@
 
 package org.apache.drill.exec.store.dfs;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -68,6 +71,15 @@ public class GoogleDriveFileSystem extends FileSystem {
 
         FSDataInputStream stream;
         String fileName = path.toUri().getPath();
+
+        Drive client = getClient();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            // need to get fileId
+            client.files().get(fileId).executeMediaAndDownloadTo(out);
+        }
     }
 
     private Drive getClient() {
@@ -84,10 +96,13 @@ public class GoogleDriveFileSystem extends FileSystem {
         String googleDriveAccessToken = this.getConf().get("googleDriveAccessToken", "");
 
         GoogleCredential credential = new GoogleCredential().setAccessToken(googleDriveAccessToken);
-        Drive client = new Drive.builder(new NetHttpTransport(),
+
+        this.client = new Drive.builder(new NetHttpTransport(),
                                         GsonFactory.getDefaultInstance(),
                                         credential)
             .setApplicationName(googleDriveAppName)
             .build();
+
+        return this.client;
     }
 }
