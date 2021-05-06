@@ -17,30 +17,19 @@
  */
 package org.apache.drill.exec.store.log;
 
-public class LogFormatDefinition {
-
-  private String regex;
-  private List<LogFormatField> fields;
-
-  public LogFormatDefinition() {
-    this.regex = "";
-    this.fields = new List<LogFormatField>();
-  }
-
-  public LogFormatDefinition(String regex, List<LogFormatField> fields) {
-    this.regex = regex;
-    this.fields = fields;
-  }
-
-  public LogFormatDefinition(String regex, LogFormatField... fields) {
-    this(regex, Arrays.asList(fields));
-  }
-
-  public String getRegex() {
-    return regex;
-  }
-
-  public List<LogFormatField> getFields() {
-    return fields;
+public class LogFormatPresets {
+  public static LogFormatDefinition getPresetDefinition(string name) {
+    switch(name) {
+      case "mysql_log":
+        return new LogFormatDefinition("(\\d{6})\\s(\\d{2}:\\d{2}:\\d{2})\\s+(\\d+)\\s(\\w+)\\s+(.+)",
+          new LogFormatField("eventDate", "DATE", "yyMMdd"),
+          new LogFormatField("eventTime", "TIME", "HH:mm:ss"),
+          new LogFormatField("PID", "INT"),
+          new LogFormatField("action"),
+          new LogFormatField("query")
+        );
+      default:
+        return new LogFormatDefinition();
+    }
   }
 }
