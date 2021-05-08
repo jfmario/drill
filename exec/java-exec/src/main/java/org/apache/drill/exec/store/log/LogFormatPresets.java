@@ -22,11 +22,16 @@ public class LogFormatPresets {
     switch(name) {
       case "mysql_log":
         return new LogFormatDefinition("(\\d{6})\\s(\\d{2}:\\d{2}:\\d{2})\\s+(\\d+)\\s(\\w+)\\s+(.+)",
-          new LogFormatField("eventDate", "DATE", "yyMMdd"),
-          new LogFormatField("eventTime", "TIME", "HH:mm:ss"),
-          new LogFormatField("PID", "INT"),
+          new LogFormatField("date", "DATE", "yyMMdd"),
+          new LogFormatField("time", "TIME", "HH:mm:ss"),
+          new LogFormatField("process_id", "INT"),
           new LogFormatField("action"),
           new LogFormatField("query")
+        );
+      case "netscreen_log":
+        return new LogFormatDefinition("(\\w{3}\\s{1,2}\\d{1,2})\\s+(.+)",
+          new LogFormatField("date", "DATE", "MMM dd"),
+          new LogFormatField("message")
         );
       default:
         return new LogFormatDefinition();

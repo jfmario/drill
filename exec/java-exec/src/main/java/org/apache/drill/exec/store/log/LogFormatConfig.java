@@ -90,6 +90,10 @@ public class LogFormatConfig implements FormatPluginConfig {
     return schema;
   }
 
+  public String getPreset() {
+    return preset;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
