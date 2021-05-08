@@ -21,7 +21,7 @@ public class LogFormatPresets {
   public static LogFormatDefinition getPresetDefinition(String name) {
     switch(name) {
       case "mysql_log":
-        return new LogFormatDefinition("(\\d{6})\\s(\\d{2}:\\d{2}:\\d{2})\\s+(\\d+)\\s(\\w+)\\s+(.+)",
+        return new LogFormatDefinition("(?<date>\\d{6})\\s(?<time>\\d{2}:\\d{2}:\\d{2})\\s+(?<processid>\\d+)\\s(?<action>\\w+)\\s+(?<query>.+)",
           new LogFormatField("date", "DATE", "yyMMdd"),
           new LogFormatField("time", "TIME", "HH:mm:ss"),
           new LogFormatField("process_id", "INT"),
@@ -29,8 +29,11 @@ public class LogFormatPresets {
           new LogFormatField("query")
         );
       case "netscreen_log":
-        return new LogFormatDefinition("(\\w{3}\\s{1,2}\\d{1,2})\\s+(.+)",
-          new LogFormatField("date", "DATE", "MMM dd"),
+        return new LogFormatDefinition("(?<date>\\w{3}\\s{1,2}\\d{1,2})\\s+(?<time>\\d{2}:\\d{2}:\\d{2})\\s(?<device>[\\w\\.\\[\\]]+)\\s[\\w\\.]+:\\sNetScreen\\sdevice_id=(?<deviceid>\\w+)\\s(.+)",
+          new LogFormatField("date"),
+          new LogFormatField("time", "TIME", "HH:mm:ss"),
+          new LogFormatField("device"),
+          new LogFormatField("device_id"),
           new LogFormatField("message")
         );
       default:
