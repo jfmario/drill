@@ -17,6 +17,10 @@
  */
 package org.apache.drill.exec.store.log;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class LogFormatDefinition {
 
   private String regex;
@@ -24,7 +28,7 @@ public class LogFormatDefinition {
 
   public LogFormatDefinition() {
     this.regex = "";
-    this.fields = new List<LogFormatField>();
+    this.fields = new ArrayList<LogFormatField>();
   }
 
   public LogFormatDefinition(String regex, List<LogFormatField> fields) {

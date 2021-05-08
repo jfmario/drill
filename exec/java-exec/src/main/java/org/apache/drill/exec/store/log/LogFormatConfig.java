@@ -33,22 +33,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonTypeName(LogFormatPlugin.PLUGIN_NAME)
 public class LogFormatConfig implements FormatPluginConfig {
 
-  private final String regex;
+  private String regex;
   private final String extension;
   private final int maxErrors;
-  private final List<LogFormatField> schema;
+  private List<LogFormatField> schema;
+  private String preset;
 
   @JsonCreator
   public LogFormatConfig(
       @JsonProperty("regex") String regex,
       @JsonProperty("extension") String extension,
       @JsonProperty("maxErrors") Integer maxErrors,
-      @JsonProperty("schema") List<LogFormatField> schema) {
-    this.regex = regex;
+      @JsonProperty("schema") List<LogFormatField> schema,
+      @JsonProperty("preset") String preset
+    ) {
+
+    if (preset != null) {
+      LogFormatDefinition presetDefinition = LogFormatPresets.getPresetDefinition(preset);
+      if (presetDefinition != null) {
+        this.regex = presetDefinition.getRegex();
+        this.schema = presetDefinition.getFields();
+        if (schema != null) {
+          this.schema = schema;
+        }
+      } else {
+        this.regex = regex;
+        this.schema = schema == null ? ImmutableList.of() : schema;
+      }
+    }
+
     this.extension = extension;
+    this.preset = preset;
     this.maxErrors = maxErrors == null ? 10 : maxErrors;
-    this.schema = schema == null
-        ? ImmutableList.of() : schema;
+  }
+
+  public LogFormatConfig(String regex, String extension,
+      Integer maxErrors, List<LogFormatField> schema
+    ) {
+
+    this(regex, extension, maxErrors, schema, null);
   }
 
   public String getRegex() {
@@ -132,6 +155,7 @@ public class LogFormatConfig implements FormatPluginConfig {
         .field("extension", extension)
         .field("schema", schema)
         .field("maxErrors", maxErrors)
+        .field("preset", preset)
         .toString();
   }
 }

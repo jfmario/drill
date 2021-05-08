@@ -18,7 +18,7 @@
 package org.apache.drill.exec.store.log;
 
 public class LogFormatPresets {
-  public static LogFormatDefinition getPresetDefinition(string name) {
+  public static LogFormatDefinition getPresetDefinition(String name) {
     switch(name) {
       case "mysql_log":
         return new LogFormatDefinition("(\\d{6})\\s(\\d{2}:\\d{2}:\\d{2})\\s+(\\d+)\\s(\\w+)\\s+(.+)",
